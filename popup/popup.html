@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Autofill</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <h1>Career Autofill</h1>
+      <p class="subtitle">Smart form filling for job applications</p>
+    </header>
+
+    <!-- Current Page Actions -->
+    <section class="card">
+      <h2>Current Page</h2>
+      <div class="page-info">
+        <div class="info-row">
+          <span class="label">Status</span>
+          <span id="pageStatus">Loading...</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Mandatory fields</span>
+          <span id="fieldCount">-</span>
+        </div>
+      </div>
+      <div class="button-group">
+        <button id="autofillBtn" class="btn btn-primary">
+          Autofill
+        </button>
+        <button id="saveBtn" class="btn btn-secondary">
+          Save Form
+        </button>
+      </div>
+      <div class="data-buttons" style="margin-top: 8px;">
+        <button id="exportBtn" class="btn btn-secondary">
+          Export
+        </button>
+        <button id="importBtn" class="btn btn-secondary">
+          Import
+        </button>
+        <button id="clearBtn" class="btn btn-danger">
+          Clear
+        </button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display: none;">
+      <div class="debug-box">
+        <label>
+          <input type="checkbox" id="fillAllFields" checked>
+          <span>Fill all fields (debug mode)</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- View Toggle -->
+    <section class="card">
+      <div class="view-toggle">
+        <button id="viewFormBtn" class="btn-view active">
+          Form
+        </button>
+        <button id="viewJsonBtn" class="btn-view">
+          JSON
+        </button>
+      </div>
+    </section>
+
+    <!-- Profile Form -->
+    <section class="card" id="formView">
+      <h2>Profile</h2>
+      <p class="hint">Extension maps similar field names automatically (e.g., "First Name" → "Given Name")</p>
+      <form id="profileForm">
+        <div class="form-group">
+          <label for="firstName">First Name</label>
+          <input type="text" id="firstName" name="firstName" placeholder="John">
+        </div>
+
+        <div class="form-group">
+          <label for="lastName">Last Name</label>
+          <input type="text" id="lastName" name="lastName" placeholder="Doe">
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="john@example.com">
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone</label>
+          <input type="tel" id="phone" name="phone" placeholder="+1 (555) 000-0000">
+        </div>
+
+        <div class="form-group">
+          <label for="address">Address</label>
+          <input type="text" id="address" name="address" placeholder="123 Main Street">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="city">City</label>
+            <input type="text" id="city" name="city" placeholder="New York">
+          </div>
+          <div class="form-group">
+            <label for="state">State</label>
+            <input type="text" id="state" name="state" placeholder="NY">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="zipCode">ZIP Code</label>
+          <input type="text" id="zipCode" name="zipCode" placeholder="10001">
+        </div>
+
+        <div class="form-group">
+          <label for="country">Country</label>
+          <input type="text" id="country" name="country" placeholder="United States">
+        </div>
+
+        <div class="form-group">
+          <label for="linkedin">LinkedIn URL</label>
+          <input type="url" id="linkedin" name="linkedin" placeholder="linkedin.com/in/johndoe">
+        </div>
+
+        <div class="form-group">
+          <label for="github">GitHub URL</label>
+          <input type="url" id="github" name="github" placeholder="github.com/johndoe">
+        </div>
+
+        <div class="form-group">
+          <label for="portfolio">Portfolio URL</label>
+          <input type="url" id="portfolio" name="portfolio" placeholder="johndoe.com">
+        </div>
+
+        <div class="form-group">
+          <label for="currentCompany">Current Company</label>
+          <input type="text" id="currentCompany" name="currentCompany" placeholder="Acme Inc">
+        </div>
+
+        <div class="form-group">
+          <label for="currentTitle">Current Title</label>
+          <input type="text" id="currentTitle" name="currentTitle" placeholder="Software Engineer">
+        </div>
+
+        <div class="form-group">
+          <label for="workAuth">Work Authorization</label>
+          <select id="workAuth" name="workAuth">
+            <option value="">Select...</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sponsorship">Need Sponsorship?</label>
+          <select id="sponsorship" name="sponsorship">
+            <option value="">Select...</option>
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">
+          Save Profile
+        </button>
+      </form>
+    </section>
+
+    <!-- JSON Editor -->
+    <section class="card" id="jsonView" style="display: none;">
+      <h2>JSON Editor</h2>
+      <p class="hint">Direct JSON editing for advanced users and custom fields</p>
+
+      <div class="json-controls">
+        <button id="formatJsonBtn" class="btn btn-secondary" style="font-size: 12px; padding: 8px 12px;">
+          Format
+        </button>
+        <button id="copyJsonBtn" class="btn btn-secondary" style="font-size: 12px; padding: 8px 12px;">
+          Copy
+        </button>
+        <span class="json-stats" id="jsonStats"></span>
+      </div>
+
+      <textarea id="jsonEditor" rows="12" spellcheck="false"></textarea>
+
+      <button id="saveJsonBtn" class="btn btn-primary btn-full" style="margin-top: 12px;">
+        Save JSON
+      </button>
+    </section>
+
+    <!-- Debug Section -->
+    <section class="card">
+      <button id="debugBtn" class="btn btn-secondary btn-full">
+        Debug Fields (Open Console)
+      </button>
+    </section>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
