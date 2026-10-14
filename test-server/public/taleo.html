@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Legacy Taleo Table ATS Simulator - Career Autofill Test Suite</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Global Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">⚡</span>
+        <span>Career Autofill Test Suite</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Hub</a>
+        <a href="workday.html">Workday</a>
+        <a href="greenhouse.html">Greenhouse / Lever</a>
+        <a href="smartrecruiters.html">SmartRecruiters</a>
+        <a href="taleo.html" class="active">Taleo Table</a>
+        <a href="tailwind-spa.html">Tailwind SPA</a>
+        <a href="iframe-test.html">Multi-Frame Iframe</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1 class="page-title">
+        Oracle Taleo Table Layout Simulator
+        <span class="badge-tag badge-taleo">Table ATS</span>
+      </h1>
+      <p class="page-subtitle">Simulates legacy enterprise table-based application forms (Oracle Taleo, SelectMinds, BrassRing, Kenexa) with <code>&lt;td&gt;</code> label pairing and sentinel dropdown values (<code>-1</code>, <code>Select One</code>).</p>
+    </div>
+
+    <!-- Interactive Toolbar -->
+    <div class="action-toolbar">
+      <div class="toolbar-info">
+        <span>Status:</span>
+        <span id="filledCountDisplay" class="stats-counter">0 of 14 fields filled</span>
+      </div>
+      <div class="toolbar-buttons">
+        <button type="button" id="inspectFormBtn" class="btn btn-secondary">🔍 Inspect Detector</button>
+        <button type="button" id="clearFormBtn" class="btn btn-danger">↺ Clear All Fields</button>
+      </div>
+    </div>
+
+    <!-- Legacy Taleo Table-Based Form -->
+    <form id="taleoForm" class="form-card">
+      <div class="section-header">
+        <h3>Candidate Profile & Qualifications</h3>
+        <span class="section-hint">HTML Table Architecture</span>
+      </div>
+
+      <table class="taleo-table">
+        <tbody>
+          <!-- First Name -->
+          <tr>
+            <td class="label-cell">
+              First Name: <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <input type="text" name="u_first_name" id="taleo_fn" class="taleo-input" required>
+            </td>
+          </tr>
+
+          <!-- Last Name -->
+          <tr>
+            <td class="label-cell">
+              Last Name: <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <input type="text" name="u_last_name" id="taleo_ln" class="taleo-input" required>
+            </td>
+          </tr>
+
+          <!-- Email Address -->
+          <tr>
+            <td class="label-cell">
+              Primary Email: <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <input type="email" name="u_email_address" id="taleo_email" class="taleo-input" required>
+            </td>
+          </tr>
+
+          <!-- Contact Phone -->
+          <tr>
+            <td class="label-cell">
+              Primary Phone: <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <input type="tel" name="u_primary_phone" id="taleo_phone" class="taleo-input" required>
+            </td>
+          </tr>
+
+          <!-- Address Line 1 -->
+          <tr>
+            <td class="label-cell">
+              Residential Address: <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <input type="text" name="u_address_line_1" id="taleo_address" class="taleo-input" required>
+            </td>
+          </tr>
+
+          <!-- City & Postal -->
+          <tr>
+            <td class="label-cell">
+              City: <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <input type="text" name="u_city" id="taleo_city" class="taleo-input" required>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label-cell">
+              State / Province: <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <input type="text" name="u_state" id="taleo_state" class="taleo-input" required>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="label-cell">
+              Postal Code / ZIP: <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <input type="text" name="u_postal_code" id="taleo_postal" class="taleo-input" required>
+            </td>
+          </tr>
+
+          <!-- Country Dropdown with Sentinel -1 (Crucial Placeholder False-Positive Test) -->
+          <tr>
+            <td class="label-cell">
+              Country of Residence: <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <select name="u_country_code" id="taleo_country" required>
+                <option value="-1">-- Please Select Country --</option>
+                <option value="US">United States</option>
+                <option value="CA">Canada</option>
+                <option value="GB">United Kingdom</option>
+                <option value="IN">India</option>
+                <option value="DE">Germany</option>
+              </select>
+              <div class="helper-text">Select value defaults to <code>-1</code>. Must NOT be treated as already filled!</div>
+            </td>
+          </tr>
+
+          <!-- Current Employer -->
+          <tr>
+            <td class="label-cell">Current Employer:</td>
+            <td class="input-cell">
+              <input type="text" name="u_current_employer" id="taleo_employer" class="taleo-input">
+            </td>
+          </tr>
+
+          <!-- Current Title -->
+          <tr>
+            <td class="label-cell">Job Title:</td>
+            <td class="input-cell">
+              <input type="text" name="u_current_job_title" id="taleo_title" class="taleo-input">
+            </td>
+          </tr>
+
+          <!-- Professional Links -->
+          <tr>
+            <td class="label-cell">LinkedIn Profile:</td>
+            <td class="input-cell">
+              <input type="url" name="u_linkedin_url" id="taleo_linkedin" class="taleo-input">
+            </td>
+          </tr>
+
+          <!-- Work Auth Dropdown with Sentinel 0 -->
+          <tr>
+            <td class="label-cell">
+              Authorized to work in United States? <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <select name="u_work_authorization_us" id="taleo_work_auth" required>
+                <option value="0">Select One</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </td>
+          </tr>
+
+          <!-- Visa Sponsorship Dropdown -->
+          <tr>
+            <td class="label-cell">
+              Will require Visa Sponsorship? <span class="req-star">*</span>
+            </td>
+            <td class="input-cell">
+              <select name="u_visa_sponsorship_req" id="taleo_sponsorship" required>
+                <option value="0">Select One</option>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+        <button type="submit" class="btn btn-primary">Save & Continue</button>
+      </div>
+    </form>
+
+    <!-- Live Event Log -->
+    <div class="test-log-card">
+      <div class="test-log-header">
+        <span>Activity Log & Field Inspection</span>
+        <span>Console</span>
+      </div>
+      <div id="logBody" class="test-log-body"></div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

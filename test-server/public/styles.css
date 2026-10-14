@@ -1,0 +1,502 @@
+/* ==========================================================================
+   Career Autofill - ATS Test Suite Design System
+   Modern, responsive styling with rich aesthetics & interactive visualizers
+   ========================================================================== */
+
+:root {
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-glow: rgba(99, 102, 241, 0.25);
+  --success: #10b981;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --border: #e2e8f0;
+  --border-focus: #818cf8;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-pill: 9999px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px -2px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-main);
+  line-height: 1.5;
+  font-size: 14px;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------------------
+   Top Global Navigation Bar
+   -------------------------------------------------------------------------- */
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid #1e293b;
+  padding: 0 24px;
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.brand-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+
+.nav-links a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.nav-links a:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-links a.active {
+  color: white;
+  background: #334155;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   Layout & Container
+   -------------------------------------------------------------------------- */
+.page-container {
+  max-width: 960px;
+  margin: 32px auto 80px auto;
+  padding: 0 20px;
+}
+
+/* Header & Banner */
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+.badge-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-workday { background: #e0e7ff; color: #4338ca; }
+.badge-greenhouse { background: #ecfdf5; color: #047857; }
+.badge-taleo { background: #fef3c7; color: #b45309; }
+.badge-smart { background: #fae8ff; color: #86198f; }
+.badge-tailwind { background: #e0f2fe; color: #0369a1; }
+.badge-iframe { background: #fee2e2; color: #b91c1c; }
+
+/* Control Banner */
+.action-toolbar {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.stats-counter {
+  font-weight: 700;
+  color: var(--primary);
+  background: #f5f3ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.toolbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--text-main);
+  border-color: var(--border);
+}
+.btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.btn-danger {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+.btn-danger:hover {
+  background: #fee2e2;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  color: white;
+  box-shadow: 0 2px 8px var(--primary-glow);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+/* --------------------------------------------------------------------------
+   Card & Form Structure
+   -------------------------------------------------------------------------- */
+.form-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+}
+
+.card-section {
+  margin-bottom: 28px;
+}
+
+.card-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.01em;
+}
+
+.section-hint {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* Grid Layouts */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.grid-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+@media (max-width: 640px) {
+  .grid-2, .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Form Groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required-asterisk {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.helper-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Form Controls */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+select,
+textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #0f172a;
+  background: white;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+/* Workday Specific Combobox Simulation */
+.workday-combobox-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.workday-combobox-wrapper input[readonly] {
+  background-color: #ffffff;
+  cursor: pointer;
+  padding-right: 32px;
+}
+
+.workday-combobox-wrapper .combo-arrow {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: #64748b;
+  font-size: 11px;
+}
+
+/* Radio & Checkbox Groups */
+.radio-group-vertical,
+.checkbox-group-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.radio-group-horizontal {
+  display: flex;
+  gap: 18px;
+  margin-top: 4px;
+}
+
+.choice-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500 !important;
+  color: #334155;
+  cursor: pointer;
+}
+
+.choice-label input[type="radio"],
+.choice-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Live Visual Feedback Banner
+   -------------------------------------------------------------------------- */
+.test-log-card {
+  background: #0f172a;
+  border-radius: var(--radius);
+  color: #e2e8f0;
+  padding: 16px 20px;
+  margin-top: 24px;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 12px;
+}
+
+.test-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #334155;
+  color: #94a3b8;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.test-log-body {
+  max-height: 140px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.log-item {
+  color: #38bdf8;
+}
+.log-item.success { color: #4ade80; }
+.log-item.warn { color: #facc15; }
+
+/* --------------------------------------------------------------------------
+   Tailwind Pseudo Element CSS Asterisk Simulator
+   -------------------------------------------------------------------------- */
+.tailwind-label-required::after {
+  content: ' *';
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   Legacy Taleo Table Styles
+   -------------------------------------------------------------------------- */
+.taleo-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.taleo-table td {
+  padding: 8px 10px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.taleo-table td.label-cell {
+  width: 32%;
+  font-weight: 600;
+  color: #475569;
+  text-align: right;
+  padding-right: 16px;
+}
+
+.taleo-table td.input-cell {
+  width: 68%;
+}
+
+.taleo-table .req-star {
+  color: #dc2626;
+  font-weight: bold;
+}

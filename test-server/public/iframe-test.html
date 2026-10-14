@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Frame Iframe Simulator - Career Autofill Test Suite</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .iframe-wrapper {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: white;
+      box-shadow: var(--shadow-md);
+      margin-top: 20px;
+    }
+    .iframe-header-bar {
+      background: #1e293b;
+      color: white;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .iframe-tag {
+      background: #334155;
+      color: #38bdf8;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+    iframe {
+      width: 100%;
+      height: 750px;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Global Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">⚡</span>
+        <span>Career Autofill Test Suite</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Hub</a>
+        <a href="workday.html">Workday</a>
+        <a href="greenhouse.html">Greenhouse / Lever</a>
+        <a href="smartrecruiters.html">SmartRecruiters</a>
+        <a href="taleo.html">Taleo Table</a>
+        <a href="tailwind-spa.html">Tailwind SPA</a>
+        <a href="iframe-test.html" class="active">Multi-Frame Iframe</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1 class="page-title">
+        Multi-Frame & Embedded Iframe ATS Simulator
+        <span class="badge-tag badge-iframe">Multi-Frame</span>
+      </h1>
+      <p class="page-subtitle">Tests Career Autofill's ability to inject into and populate forms hosted inside nested child <code>&lt;iframe&gt;</code> elements (common on company career portals embedding Taleo, Workday, or Greenhouse widgets).</p>
+    </div>
+
+    <!-- Parent Page Header Note -->
+    <div class="action-toolbar">
+      <div class="toolbar-info">
+        <span>Frame Structure:</span>
+        <span class="stats-counter">1 Parent Host Page + 1 Embedded Application Iframe</span>
+      </div>
+      <div class="toolbar-buttons">
+        <a href="workday.html" target="appFrame" class="btn btn-secondary">Load Workday into Frame</a>
+        <a href="greenhouse.html" target="appFrame" class="btn btn-secondary">Load Greenhouse into Frame</a>
+      </div>
+    </div>
+
+    <!-- Embedded Iframe Container -->
+    <div class="iframe-wrapper">
+      <div class="iframe-header-bar">
+        <span>Embedded ATS Frame Window</span>
+        <span class="iframe-tag">&lt;iframe src="workday.html"&gt;</span>
+      </div>
+      <iframe id="appFrame" name="appFrame" src="workday.html"></iframe>
+    </div>
+
+    <!-- Sandboxed Frame Test (Tests fail-safe multi-frame execution) -->
+    <div style="margin-top: 32px; padding: 18px; background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius);">
+      <h4 style="font-size: 14px; font-weight: 700; color: #92400e; margin-bottom: 4px;">Skeptical Verification: Sandboxed Iframe Resilience</h4>
+      <p style="font-size: 12px; color: #b45309; line-height: 1.5;">
+        Many real career portals embed restricted third-party widgets (e.g. Google reCAPTCHA, Cloudflare verification, analytics). The extension includes fail-safe try/catch handlers ensuring that restricted subframes never prevent main frame or accessible child frames from being scanned and filled.
+      </p>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
