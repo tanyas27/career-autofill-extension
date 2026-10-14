@@ -1,0 +1,19 @@
+# Build and package output
+dist/
+*.zip
+*.sha256
+
+# macOS
+.DS_Store
+
+# Editor artifacts
+.idea/
+*.swp
+*.swo
+
+# Node / NPM (if added in future)
+node_modules/
+npm-debug.log*
+
+# Test artifacts
+tests/*.png

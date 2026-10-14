@@ -1,0 +1,92 @@
+name: Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (leave blank to use version from manifest.json)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up packaging environment
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y zip
+
+      - name: Resolve version and package extension
+        id: package
+        run: |
+          chmod +x ./scripts/package.sh
+
+          # Determine target tag
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TARGET_TAG="${{ github.ref_name }}"
+            ./scripts/package.sh --validate-tag "$TARGET_TAG"
+          elif [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            TARGET_TAG="${{ github.event.inputs.tag_name }}"
+            ./scripts/package.sh --validate-tag "$TARGET_TAG"
+          else
+            ./scripts/package.sh
+            MANIFEST_VERSION=$(grep '"version"' manifest.json | head -n 1 | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
+            TARGET_TAG="v${MANIFEST_VERSION}"
+          fi
+
+          MANIFEST_VERSION=$(grep '"version"' manifest.json | head -n 1 | sed -E 's/.*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
+          ZIP_FILE="dist/career-autofill-v${MANIFEST_VERSION}.zip"
+          SHA_FILE="dist/career-autofill-v${MANIFEST_VERSION}.zip.sha256"
+
+          echo "target_tag=$TARGET_TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$MANIFEST_VERSION" >> "$GITHUB_OUTPUT"
+          echo "zip_file=$ZIP_FILE" >> "$GITHUB_OUTPUT"
+          echo "sha_file=$SHA_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Release Notes Body
+        id: release_notes
+        run: |
+          cat << 'EOF' > release_body.md
+          ## Installation Instructions (Chrome / Chromium Browsers)
+
+          1. **Download** the attached `career-autofill-v*.zip` file below.
+          2. **Extract/Unzip** the downloaded `.zip` file on your computer.
+          3. Open Google Chrome and navigate to `chrome://extensions/`.
+          4. Enable **Developer mode** using the toggle switch in the top-right corner.
+          5. Click the **Load unpacked** button in the top-left corner.
+          6. Select the unzipped folder containing `manifest.json`.
+          7. **Done!** The Career Autofill icon will appear in your browser extension toolbar.
+
+          ---
+          ### Integrity Verification (Optional)
+          To verify file integrity, compare the SHA-256 hash using:
+          - **macOS / Linux**: `shasum -a 256 career-autofill-v*.zip` or `sha256sum career-autofill-v*.zip`
+          - **Windows PowerShell**: `Get-FileHash career-autofill-v*.zip -Algorithm SHA256`
+          
+          ---
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.package.outputs.target_tag }}
+          name: "Career Autofill ${{ steps.package.outputs.target_tag }}"
+          body_path: release_body.md
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            ${{ steps.package.outputs.zip_file }}
+            ${{ steps.package.outputs.sha_file }}
