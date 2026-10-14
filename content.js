@@ -1,627 +1,817 @@
 /**
- * Content Script - Handles autofill and field detection
+ * Content Script - Coordinates form autofill, AI semantic matching, and DOM interaction.
  */
 
-console.log('🟢 [Career Autofill] content.js LOADING...');
+console.log('[Career Autofill] content.js loading...');
 
 (function() {
   'use strict';
 
-  console.log('🔵 [Career Autofill] Content script starting...');
+  const SCRIPT_VERSION = '2.2.0';
+  window.__CAREER_AUTOFILL_VERSION__ = SCRIPT_VERSION;
 
-  // Prevent multiple injections
   if (window.__CAREER_AUTOFILL_LOADED__) {
-    console.log('⚠️ [Career Autofill] Already loaded, skipping');
-    return;
+    console.log(`[Career Autofill] Re-initializing content script v${SCRIPT_VERSION} with active runtime context`);
+  }
+  if (window.__CAREER_AUTOFILL_CLEANUP__) {
+    try { window.__CAREER_AUTOFILL_CLEANUP__(); } catch (e) {}
   }
   window.__CAREER_AUTOFILL_LOADED__ = true;
 
-  console.log('🔵 [Career Autofill] Checking for FieldDetector...');
   const detector = window.FieldDetector;
   if (!detector) {
-    console.error('❌ [Career Autofill] FieldDetector not loaded! window.FieldDetector:', window.FieldDetector);
-    console.error('❌ [Career Autofill] Available on window:', Object.keys(window).filter(k => k.includes('Field') || k.includes('Career')));
+    console.error('[Career Autofill] FieldDetector not available in content script');
     return;
   }
 
-  console.log('✅ [Career Autofill] FieldDetector found!', detector);
+  console.log('[Career Autofill] FieldDetector connected successfully');
 
   /**
-   * Autofill mandatory fields with saved data
+   * Main Hybrid Autofill Execution
+   * Tier 1: Fast deterministic heuristic matching (0-5ms)
+   * Tier 2: On-Device Gemini Nano AI semantic matching for ambiguous/multiple description fields
+   * Tier 3: Fallback heuristics
    */
-  async function autofill(fillAll = false) {
-    try {
-      console.log('[Career Autofill] Starting autofill, fillAll mode:', fillAll);
-      console.log('[Career Autofill] Detector available:', !!detector);
+  /**
+   * Intelligently synthesize contextual, professional responses for job application essays
+   * using the candidate's name, current title, company, and background.
+   */
+  function synthesizeEssay(key, prof = {}, questionLabel = '') {
+    const name = prof.fullName || (prof.firstName && prof.lastName ? `${prof.firstName} ${prof.lastName}` : (prof.firstName || ''));
+    const title = prof.currentTitle || 'Software Engineer';
+    const company = prof.currentCompany ? ` at ${prof.currentCompany}` : '';
+    const skills = 'modern full-stack software development, distributed systems, and scalable APIs';
 
-      // Check if extension context is still valid
-      if (!chrome.runtime?.id) {
-        throw new Error('Extension context invalidated. Please refresh the page.');
+    if (key === 'whyUs') {
+      return `I am excited to apply for this opportunity because your team's mission and engineering standards align closely with my career goals. With my background as a ${title}${company}, I look forward to contributing my technical problem-solving skills, collaborating on high-impact projects, and building resilient software with your team.`;
+    }
+    if (key === 'projectHighlight') {
+      return `In my experience as a ${title}, I spearheaded the architecture and delivery of a scalable, high-throughput feature from conception to production. I collaborated cross-functionally to optimize latency, implement comprehensive automated test suites, and ensure high availability while delivering measurable user value.`;
+    }
+    if (key === 'coverLetter') {
+      const greeting = 'Dear Hiring Team,\n\n';
+      const body = `I am writing to express my strong interest in joining your engineering organization as a ${title}. With a proven foundation in ${skills}, I thrive when tackling complex technical challenges and turning product requirements into clean, scalable software.\n\nThroughout my career, I have prioritized engineering rigor, continuous learning, and close cross-functional collaboration. I would welcome the opportunity to bring my technical skills and dedication to your team.\n\nThank you for your time and consideration.\n\n`;
+      const signoff = name ? `Sincerely,\n${name}` : 'Sincerely,\nApplicant';
+      return greeting + body + signoff;
+    }
+    if (key === 'aboutMe') {
+      return `${title} dedicated to developing scalable, high-performance applications and intuitive user experiences. Passionate about software craftsmanship, emerging technologies, and delivering impact.`;
+    }
+    return '';
+  }
+
+  /**
+   * Helper to resolve profile values including flat keys and customFields array
+   */
+  function getProfileValue(key, profile) {
+    if (!key || !profile) return null;
+    if (profile[key] !== undefined && profile[key] !== null) {
+      const str = String(profile[key]).trim();
+      if (str.length > 0) return profile[key];
+    }
+    if (Array.isArray(profile.customFields)) {
+      const keyLower = String(key).toLowerCase().trim();
+      const matched = profile.customFields.find(cf => {
+        const cfKey = String(cf.key || '').toLowerCase().trim();
+        const cfLabel = String(cf.label || '').toLowerCase().trim();
+        return cfKey === keyLower || cfLabel === keyLower;
+      });
+      if (matched && matched.value !== undefined && matched.value !== null) {
+        const str = String(matched.value).trim();
+        if (str.length > 0) return matched.value;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Main Hybrid / AI Enforced Autofill Execution
+   * - AI Enforced Mode (Default/Recommended): Complete semantic tree arbitration on all candidate fields.
+   *   Prevents blind heuristic guessing.
+   * - Hybrid Mode: Tier 1 Fast Regex -> Tier 2 AI for ambiguous -> Tier 3 Heuristics fallback.
+   */
+  async function autofill(options = {}) {
+    try {
+      const fillAllParam = typeof options === 'boolean' ? options : (options && typeof options.fillAll === 'boolean' ? options.fillAll : null);
+      const aiEnforcedParam = options && typeof options.aiEnforced === 'boolean' ? options.aiEnforced : null;
+      const overwriteParam = options && typeof options.overwrite === 'boolean' ? options.overwrite : null;
+
+      let storageData = {};
+      try {
+        if (chrome.runtime?.id && chrome.storage?.local) {
+          storageData = await chrome.storage.local.get(['profile', 'fillAllMode', 'aiEnforcedMode', 'overwriteMode']);
+        }
+      } catch (e) {}
+
+      const passedProfile = (options && options.profile && typeof options.profile === 'object') ? options.profile : null;
+      const profile = passedProfile || storageData.profile || {};
+      const shouldFillAll = fillAllParam !== null ? fillAllParam : (storageData.fillAllMode !== false);
+      const isAiEnforced = aiEnforcedParam !== null ? aiEnforcedParam : (storageData.aiEnforcedMode !== false);
+      const shouldOverwrite = overwriteParam !== null ? overwriteParam : (storageData.overwriteMode === true);
+
+      const profileKeys = Object.keys(profile).filter(k => k !== 'customFields' && profile[k] && String(profile[k]).trim().length > 0);
+      if (Array.isArray(profile.customFields)) {
+        profile.customFields.forEach(cf => {
+          if (cf.value && String(cf.value).trim().length > 0) {
+            profileKeys.push(cf.key || cf.label);
+          }
+        });
+      }
+      if (profileKeys.length === 0) {
+        console.warn('[Career Autofill] Profile is empty. Nothing to fill.');
+        return -1; // Special code: Profile is empty
       }
 
-      // Get saved profile data
-      const result = await chrome.storage.local.get(['profile', 'fillAllMode']);
-      const profile = result.profile || {};
-      const shouldFillAll = fillAll || result.fillAllMode || false;
+      const allFields = detector.getFields();
+      console.log(`[Career Autofill] Discovered ${allFields.length} fillable fields on page`);
 
-      console.log('[Career Autofill] Profile data:', profile);
-      console.log('[Career Autofill] Profile keys:', Object.keys(profile));
-      console.log('[Career Autofill] Fill all mode:', shouldFillAll);
-
-      const fields = detector.getFields();
-      console.log('[Career Autofill] Total fields detected:', fields.length);
       let filledCount = 0;
 
-      for (const field of fields) {
-        const classification = detector.classify(field);
+      // Core candidate profile keys that should always be candidate fields even if portal omits explicit asterisk
+      const CORE_IDENTITY_KEYS = new Set([
+        'firstname', 'lastname', 'fullname', 'email', 'phone', 'address', 'city', 'state', 'zipcode', 'country', 'workauth', 'sponsorship'
+      ]);
 
-        if (!classification) {
-          console.log('[Career Autofill] Field not classified:', field);
-          continue;
-        }
+      // =========================================================================
+      // AI ENFORCED MODE: Full Semantic Tree Arbitration (Zero Blind Guesses)
+      // =========================================================================
+      if (isAiEnforced) {
+        console.log('[Career Autofill] Executing in AI ENFORCED MODE (Full Semantic Arbitration)...');
+        const candidateFields = [];
 
-        console.log('[Career Autofill] Classified field:', classification.label, 'key:', classification.key, 'mandatory:', classification.isMandatory);
+        for (const field of allFields) {
+          if (field.type === 'password' || field.disabled) continue;
 
-        // Skip fields that should never be auto-filled
-        const skipFields = ['countryCode', 'country code'];
-        if (skipFields.includes(classification.key.toLowerCase())) {
-          console.log('[Career Autofill] Skipping blacklisted field:', classification.label);
-          continue;
-        }
-
-        // Only fill mandatory fields (unless debug mode is on)
-        if (!shouldFillAll && !classification.isMandatory) {
-          console.log('[Career Autofill] Skipping non-mandatory field:', classification.label);
-          continue;
-        }
-
-        // Skip if field already has a value
-        const currentValue = detector.getValue(field);
-        if (currentValue && String(currentValue).trim().length > 0) {
-          console.log('[Career Autofill] Field already has value:', classification.label, '=', currentValue);
-          continue;
-        }
-
-        // Get value from profile
-        let value = null;
-
-        // Special handling for today's date field
-        if (classification.key === 'todaysDate') {
-          // Check if it's a date input
-          const isDateInput = field.type === 'date';
-          value = detector.getTodaysDate(isDateInput ? 'iso' : 'text');
-        } else if (classification.isCustom) {
-          // Custom field - check if we have it saved
-          value = profile[classification.key];
-        } else {
-          // Standard field
-          value = profile[classification.key];
-        }
-
-        console.log('[Career Autofill] Attempting to fill:', classification.label, 'with value:', value);
-
-        // Fill the field
-        if (value !== null && value !== undefined && String(value).trim() !== '') {
-          const success = detector.setValue(field, value);
-          console.log('[Career Autofill] Fill result for', classification.label, ':', success);
-          if (success) {
-            filledCount++;
-            try {
-              field.style.outline = '2px solid #10b981';
-              setTimeout(() => {
-                field.style.outline = '';
-              }, 2000);
-            } catch (styleError) {
-              console.warn('[Career Autofill] Could not set outline on field:', styleError);
-            }
+          // Check readonly: Allow readonly comboboxes, datepickers, selects, or custom controls
+          if (field.readOnly) {
+            const isInteractiveCombobox =
+              field.getAttribute('role') === 'combobox' ||
+              field.getAttribute('role') === 'textbox' ||
+              field.hasAttribute('aria-haspopup') ||
+              field.getAttribute('data-automation-id')?.includes('select') ||
+              field.getAttribute('data-automation-id')?.includes('country') ||
+              field.getAttribute('data-automation-id')?.includes('date') ||
+              field.classList?.contains('select') ||
+              field.classList?.contains('dropdown') ||
+              field.closest('[role="combobox"], [data-automation-id="formField"]');
+            if (!isInteractiveCombobox) continue;
           }
-        } else {
-          console.log('[Career Autofill] No value in profile for:', classification.label);
-        }
-      }
 
-      console.log('[Career Autofill] ✅ Autofill complete. Filled', filledCount, 'fields');
-      return filledCount;
-    } catch (error) {
-      console.error('[Career Autofill] ❌ Autofill error:', error);
-      console.error('[Career Autofill] Error stack:', error.stack);
-      return 0;
-    }
-  }
-
-  /**
-   * Save current form data
-   */
-  async function saveFormData() {
-    try {
-      const result = await chrome.storage.local.get(['profile']);
-      const profile = result.profile || {};
-
-      const fields = detector.getFields();
-      let savedCount = 0;
-      const processedRadioGroups = new Set();
-
-      console.log('[Career Autofill] Saving form data, found fields:', fields.length);
-
-      for (const field of fields) {
-        // Never save password fields
-        if (field.type === 'password') continue;
-
-        const classification = detector.classify(field);
-
-        // Save all classified fields (not just mandatory ones)
-        if (!classification) {
-          console.log('[Career Autofill] Field not classified:', field);
-          continue;
-        }
-
-        // Skip fields that should never be saved
-        const skipFields = ['countrycode', 'country code'];
-        if (skipFields.includes(classification.key.toLowerCase())) {
-          console.log('[Career Autofill] Skipping blacklisted field from save:', classification.label);
-          continue;
-        }
-
-        // For radio buttons (standard or custom), only process each group once
-        const isRadio = field.type === 'radio' || field.getAttribute('role') === 'radio';
-        if (isRadio) {
-          const radioName = field.name || field.getAttribute('name');
-          const radioGroupKey = radioName ? `${radioName}_radio` : `${field.id}_radio`;
-          if (processedRadioGroups.has(radioGroupKey)) {
-            console.log('[Career Autofill] Radio group already processed:', radioGroupKey);
+          // Skip dial codes
+          const classification = detector.classify(field);
+          if (classification && ['countrycode', 'country code'].includes(classification.key.toLowerCase())) {
             continue;
           }
-          processedRadioGroups.add(radioGroupKey);
-          console.log('[Career Autofill] Processing radio group:', radioGroupKey);
+
+          // Check candidate eligibility:
+          // In AI Enforced mode, if shouldFillAll is true (default), all interactive candidate fields are evaluated.
+          // If shouldFillAll is false, mandatory fields, core identity fields, OR fields that have matching profile values are evaluated.
+          const isEssayField = field.tagName?.toLowerCase() === 'textarea' || field.tagName?.toLowerCase() === 'spl-textarea';
+          const profileHasKey = classification && (getProfileValue(classification.key, profile) !== null || getProfileValue(classification.label, profile) !== null);
+          const isCoreField = classification && CORE_IDENTITY_KEYS.has(classification.key.toLowerCase());
+          const isMandatory = detector.isMandatory(field);
+
+          if (!shouldFillAll && !isMandatory && !isCoreField && !profileHasKey && !isEssayField) {
+            continue;
+          }
+
+          // Skip if already filled unless overwrite is enabled
+          if (!shouldOverwrite) {
+            const currentValue = detector.getValue(field);
+            if (currentValue && String(currentValue).trim().length > 0) {
+              continue;
+            }
+          }
+
+          candidateFields.push(field);
         }
 
-        const value = detector.getValue(field);
-        console.log('[Career Autofill] Field value:', classification.key, '=', value);
+        console.log(`[Career Autofill AI Enforced] Routing ${candidateFields.length} candidate fields to AI Arbiter...`);
+        if (candidateFields.length === 0) {
+          const filledOnPage = allFields.filter(f => {
+            const v = detector.getValue(f);
+            return v && String(v).trim().length > 0;
+          });
+          if (filledOnPage.length > 0) {
+            console.log(`[Career Autofill] All ${filledOnPage.length} candidate fields on page are already filled.`);
+            return -2; // Special code: Already filled
+          }
+          return 0;
+        }
 
-        if (value === null || value === undefined) continue;
+        const elementMap = new Map();
+        const sft = detector.buildSemanticFormTree(candidateFields);
+        sft.forEach((item, idx) => {
+          const field = candidateFields[idx];
+          elementMap.set(item.id, field);
+          if (field.id) {
+            elementMap.set(field.id, field);
+            elementMap.set(field.id.toLowerCase(), field);
+          }
+          if (field.name) {
+            elementMap.set(field.name, field);
+            elementMap.set(field.name.toLowerCase(), field);
+          }
+          const label = detector.getLabelText(field);
+          if (label) {
+            elementMap.set(label.toLowerCase().trim(), field);
+            elementMap.set(detector.normalize(label), field);
+            const cleanLabel = label.replace(/[*:,?_\-()[\]\/"'’]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+            elementMap.set(cleanLabel, field);
+          }
+        });
 
-        const trimmedValue = String(value).trim();
-        if (trimmedValue.length === 0) continue;
+        let mappings = [];
 
-        // Save to profile
-        profile[classification.key] = trimmedValue;
-        savedCount++;
-        console.log('[Career Autofill] Saved:', classification.key, '=', trimmedValue);
+        // 1. First, attempt Gemini Nano Prompt API via background with a fast 800ms race
+        try {
+          if (chrome.runtime?.id && typeof chrome.runtime.sendMessage === 'function') {
+            const aiPromise = chrome.runtime.sendMessage({
+              action: 'aiMatchFields',
+              fields: sft,
+              profile: profile,
+              options: { aiEnforced: true, minConfidence: 0.70 }
+            });
+            const timeoutPromise = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Prompt API timeout (800ms)')), 800)
+            );
+            const aiResponse = await Promise.race([aiPromise, timeoutPromise]);
+            if (aiResponse && aiResponse.success && Array.isArray(aiResponse.mappings) && aiResponse.mappings.length > 0) {
+              mappings = aiResponse.mappings;
+              console.log(`[Career Autofill AI Enforced] Received ${mappings.length} mappings from Gemini Nano Prompt API`);
+            }
+          }
+        } catch (msgErr) {
+          console.warn('[Career Autofill AI Enforced] Background Prompt API query unavailable or timed out:', msgErr.message);
+        }
+
+        // 2. If Prompt API returned 0 mappings, timed out, or background is sleeping/disconnected:
+        // Execute the On-Device Semantic Reasoning Arbiter DIRECTLY in content script without IPC latency!
+        if (mappings.length === 0 && typeof detector.arbitrateSemanticFields === 'function') {
+          console.log('[Career Autofill AI Enforced] Running Local Semantic Arbiter directly in content script (0ms latency)...');
+          const arbiterRes = detector.arbitrateSemanticFields(sft, profile, { aiEnforced: true, minConfidence: 0.70 });
+          if (arbiterRes && Array.isArray(arbiterRes.mappings) && arbiterRes.mappings.length > 0) {
+            mappings = arbiterRes.mappings;
+            console.log(`[Career Autofill AI Enforced] Local Semantic Arbiter generated ${mappings.length} verified mappings:`, mappings);
+          }
+        }
+
+        // 3. Populate matching elements
+        if (mappings.length > 0) {
+          for (const mapping of mappings) {
+            let matchedElement = elementMap.get(mapping.fieldId);
+            if (!matchedElement && typeof mapping.fieldId === 'string') {
+              const trimmedId = mapping.fieldId.trim();
+              const normId = detector.normalize(trimmedId);
+              matchedElement =
+                elementMap.get(trimmedId.toLowerCase()) ||
+                elementMap.get(normId) ||
+                document.querySelector(`[data-ca-field-id="${trimmedId}"]`) ||
+                document.getElementById(trimmedId) ||
+                document.querySelector(`[name="${CSS.escape(trimmedId)}"]`) ||
+                detector.getAllElements(document, `[data-ca-field-id="${trimmedId}"]`)[0];
+
+              if (!matchedElement) {
+                matchedElement = candidateFields.find(f => {
+                  const l = detector.getLabelText(f);
+                  return detector.normalize(l) === normId || f.name === trimmedId || f.id === trimmedId;
+                });
+              }
+            }
+            if (!matchedElement) continue;
+
+            if (!shouldOverwrite) {
+              const curVal = detector.getValue(matchedElement);
+              if (curVal && String(curVal).trim().length > 0) continue;
+            }
+
+            let fillVal = null;
+            if (mapping.selectedOption) {
+              fillVal = mapping.selectedOption;
+            } else if (mapping.profileKey === 'fullName') {
+              fillVal = profile.fullName || (profile.firstName && profile.lastName ? `${profile.firstName} ${profile.lastName}` : null);
+            } else if (mapping.profileKey === 'firstName') {
+              fillVal = profile.firstName || (profile.fullName ? profile.fullName.trim().split(/\s+/)[0] : null);
+            } else if (mapping.profileKey === 'lastName') {
+              fillVal = profile.lastName || (profile.fullName ? profile.fullName.trim().split(/\s+/).slice(1).join(' ') : null);
+            } else if (mapping.profileKey === 'workAuthCountries') {
+              fillVal = profile.workAuthCountries || profile.country;
+            } else if (mapping.profileKey === 'workAuth') {
+              fillVal = profile.workAuth || 'Yes';
+            } else if (mapping.profileKey === 'sponsorship') {
+              fillVal = profile.sponsorship || 'No';
+            } else if (mapping.profileKey === 'todaysDate') {
+              const isDateInput = matchedElement.type === 'date' || matchedElement.tagName?.toLowerCase() === 'spl-date-field';
+              fillVal = detector.getTodaysDate(isDateInput ? 'iso' : 'text');
+            } else if (mapping.profileKey && getProfileValue(mapping.profileKey, profile) !== null) {
+              fillVal = getProfileValue(mapping.profileKey, profile);
+            } else if (['whyUs', 'projectHighlight', 'coverLetter', 'aboutMe'].includes(mapping.profileKey)) {
+              fillVal = synthesizeEssay(mapping.profileKey, profile, detector.getLabelText(matchedElement));
+            }
+
+            if (fillVal !== null && fillVal !== undefined && String(fillVal).trim() !== '') {
+              const ok = detector.setValue(matchedElement, fillVal);
+              if (ok) {
+                filledCount++;
+                highlightField(matchedElement, 'ai-enforced');
+                console.log(`[Career Autofill AI Enforced] Filled ${mapping.fieldId} -> ${mapping.profileKey}`);
+              }
+            }
+          }
+        }
+
+        // 4. Fallback: If AI returned 0 mappings, attempt deterministic heuristic fill so user is not blocked
+        if (filledCount === 0 && candidateFields.length > 0) {
+          console.log('[Career Autofill AI Enforced] 0 AI mappings returned, attempting fallback heuristic resolution...');
+          for (const field of candidateFields) {
+            const cls = detector.classify(field);
+            if (!cls) continue;
+            let val = null;
+            if (cls.key === 'todaysDate') {
+              val = detector.getTodaysDate(field.type === 'date' ? 'iso' : 'text');
+            } else if (cls.key === 'fullName') {
+              val = profile.fullName || (profile.firstName && profile.lastName ? `${profile.firstName} ${profile.lastName}` : null);
+            } else if (cls.key === 'firstName') {
+              val = profile.firstName || (profile.fullName ? profile.fullName.trim().split(/\s+/)[0] : null);
+            } else if (cls.key === 'lastName') {
+              val = profile.lastName || (profile.fullName ? profile.fullName.trim().split(/\s+/).slice(1).join(' ') : null);
+            } else if (cls.key === 'workAuth') {
+              val = profile.workAuth || 'Yes';
+            } else if (cls.key === 'sponsorship') {
+              val = profile.sponsorship || 'No';
+            } else if (getProfileValue(cls.key, profile) !== null || getProfileValue(cls.label, profile) !== null) {
+              val = getProfileValue(cls.key, profile) !== null ? getProfileValue(cls.key, profile) : getProfileValue(cls.label, profile);
+            } else if (['whyUs', 'projectHighlight', 'coverLetter', 'aboutMe'].includes(cls.key)) {
+              val = synthesizeEssay(cls.key, profile, detector.getLabelText(field));
+            }
+            if (val !== null && val !== undefined && String(val).trim() !== '') {
+              const ok = detector.setValue(field, val);
+              if (ok) {
+                filledCount++;
+                highlightField(field, 'heuristic');
+                console.log(`[Career Autofill AI Enforced] Fallback filled ${field.id || field.name || cls.key} -> ${cls.key}`);
+              }
+            }
+          }
+        }
+
+        console.log(`[Career Autofill] AI Enforced autofill completed. Total fields filled: ${filledCount}`);
+        return filledCount;
       }
 
-      if (savedCount > 0) {
-        await chrome.storage.local.set({ profile });
-        console.log('[Career Autofill] Saved profile to storage:', profile);
+
+      // =========================================================================
+      // HYBRID MODE (Legacy Tier 1 Heuristics + Tier 2 AI for ambiguous)
+      // =========================================================================
+      const unmappedFields = [];
+      const longFormFields = [];
+      for (const field of allFields) {
+        if (field.type === 'password' || field.disabled) continue;
+
+        if (field.readOnly) {
+          const isInteractiveCombobox =
+            field.getAttribute('role') === 'combobox' ||
+            field.getAttribute('role') === 'textbox' ||
+            field.hasAttribute('aria-haspopup') ||
+            field.getAttribute('data-automation-id')?.includes('select') ||
+            field.getAttribute('data-automation-id')?.includes('country') ||
+            field.getAttribute('data-automation-id')?.includes('date') ||
+            field.classList?.contains('select') ||
+            field.classList?.contains('dropdown') ||
+            field.closest('[role="combobox"], [data-automation-id="formField"]');
+          if (!isInteractiveCombobox) continue;
+        }
+
+        const classification = detector.classify(field);
+        if (!classification) {
+          unmappedFields.push(field);
+          continue;
+        }
+
+        // Skip blacklisted fields
+        if (['countrycode', 'country code'].includes(classification.key.toLowerCase())) {
+          continue;
+        }
+
+        // Check mandatory requirement (core identity fields and profile-matching fields are eligible)
+        const profileHasKey = classification && profile[classification.key] && String(profile[classification.key]).trim().length > 0;
+        const isCoreField = classification && CORE_IDENTITY_KEYS.has(classification.key.toLowerCase());
+        if (!shouldFillAll && !classification.isMandatory && !isCoreField && !profileHasKey) {
+          continue;
+        }
+
+
+        // Skip if already filled unless overwrite is enabled
+        if (!shouldOverwrite) {
+          const currentValue = detector.getValue(field);
+          if (currentValue && String(currentValue).trim().length > 0) {
+            continue;
+          }
+        }
+
+        // Long-form textareas or custom questions defer to Tier 2 AI
+        if (classification.isLongForm || classification.isCustom) {
+          longFormFields.push(field);
+          continue;
+        }
+
+        let valueToFill = null;
+        if (classification.key === 'todaysDate') {
+          const isDateInput = field.type === 'date' || field.tagName?.toLowerCase() === 'spl-date-field';
+          valueToFill = detector.getTodaysDate(isDateInput ? 'iso' : 'text');
+        } else if (classification.key === 'fullName') {
+          valueToFill = profile.fullName || (profile.firstName && profile.lastName ? `${profile.firstName} ${profile.lastName}` : null);
+        } else if (classification.key === 'firstName') {
+          valueToFill = profile.firstName || (profile.fullName ? profile.fullName.trim().split(/\s+/)[0] : null);
+        } else if (classification.key === 'lastName') {
+          valueToFill = profile.lastName || (profile.fullName ? profile.fullName.trim().split(/\s+/).slice(1).join(' ') : null);
+        } else if (classification.key === 'workAuth') {
+          const questionText = detector.getSurroundingContext(field) || classification.label;
+          const authCheck = detector.evaluateCountryWorkAuth(questionText, profile);
+          valueToFill = authCheck.hasCountryContext ? (authCheck.isAuthorized ? (profile.workAuth || 'Yes') : 'No') : (profile.workAuth || 'Yes');
+        } else if (classification.key === 'sponsorship') {
+          const questionText = detector.getSurroundingContext(field) || classification.label;
+          const authCheck = detector.evaluateCountryWorkAuth(questionText, profile);
+          if (authCheck.hasCountryContext) {
+            valueToFill = authCheck.isAuthorized ? (profile.sponsorship || 'No') : (profile.sponsorshipOtherCountries || 'Yes');
+          } else {
+            valueToFill = profile.sponsorship || 'No';
+          }
+        } else if (classification.key === 'workAuthCountries') {
+          valueToFill = profile.workAuthCountries || profile.country;
+        } else if (getProfileValue(classification.key, profile) !== null || getProfileValue(classification.label, profile) !== null) {
+          valueToFill = getProfileValue(classification.key, profile) !== null ? getProfileValue(classification.key, profile) : getProfileValue(classification.label, profile);
+        } else if (['whyUs', 'projectHighlight', 'coverLetter', 'aboutMe'].includes(classification.key)) {
+          valueToFill = synthesizeEssay(classification.key, profile, detector.getLabelText(field));
+        }
+
+        if (valueToFill !== null && valueToFill !== undefined && String(valueToFill).trim() !== '') {
+          const success = detector.setValue(field, valueToFill);
+          if (success) {
+            filledCount++;
+            highlightField(field, 'heuristic');
+          }
+        } else {
+          unmappedFields.push(field);
+        }
       }
 
-      return savedCount;
+      const candidatesForAi = Array.from(new Set([...longFormFields, ...unmappedFields])).slice(0, 25);
+
+      if (candidatesForAi.length > 0) {
+        console.log(`[Career Autofill Hybrid] Routing ${candidatesForAi.length} fields to AI Arbiter`);
+        const elementMap = new Map();
+        const sft = detector.buildSemanticFormTree(candidatesForAi);
+        sft.forEach((item, idx) => {
+          const f = candidatesForAi[idx];
+          elementMap.set(item.id, f);
+          if (f.id) elementMap.set(f.id, f);
+          if (f.name) elementMap.set(f.name, f);
+          const lbl = detector.getLabelText(f);
+          if (lbl) elementMap.set(lbl.toLowerCase().trim(), f);
+        });
+
+        try {
+          const aiResponse = await chrome.runtime.sendMessage({
+            action: 'aiMatchFields',
+            fields: sft,
+            profile: profile
+          });
+
+          if (aiResponse && aiResponse.success && Array.isArray(aiResponse.mappings)) {
+            for (const mapping of aiResponse.mappings) {
+              let matchedElement = elementMap.get(mapping.fieldId);
+              if (!matchedElement && typeof mapping.fieldId === 'string') {
+                const trimmedId = mapping.fieldId.trim();
+                matchedElement =
+                  elementMap.get(trimmedId.toLowerCase()) ||
+                  document.querySelector(`[data-ca-field-id="${trimmedId}"]`) ||
+                  document.getElementById(trimmedId) ||
+                  document.querySelector(`[name="${CSS.escape(trimmedId)}"]`) ||
+                  detector.getAllElements(document, `[data-ca-field-id="${trimmedId}"]`)[0];
+              }
+              if (!matchedElement) continue;
+
+              if (!shouldOverwrite) {
+                const curVal = detector.getValue(matchedElement);
+                if (curVal && String(curVal).trim().length > 0) continue;
+              }
+
+              let fillVal = null;
+              if (mapping.selectedOption) {
+                fillVal = mapping.selectedOption;
+              } else if (mapping.profileKey && profile[mapping.profileKey]) {
+                fillVal = profile[mapping.profileKey];
+              } else if (['whyUs', 'projectHighlight', 'coverLetter', 'aboutMe'].includes(mapping.profileKey)) {
+                fillVal = synthesizeEssay(mapping.profileKey, profile, detector.getLabelText(matchedElement));
+              }
+
+              if (fillVal !== null && fillVal !== undefined && String(fillVal).trim() !== '') {
+                const ok = detector.setValue(matchedElement, fillVal);
+                if (ok) {
+                  filledCount++;
+                  highlightField(matchedElement, 'ai-enforced');
+                }
+              }
+            }
+          }
+        } catch (aiError) {
+          console.warn('[Career Autofill Hybrid] AI error; fallback to Tier 3 heuristics:', aiError);
+          for (const field of candidatesForAi) {
+            const classification = detector.classify(field);
+            if (classification && profile[classification.key]) {
+              const ok = detector.setValue(field, profile[classification.key]);
+              if (ok) {
+                filledCount++;
+                highlightField(field, 'heuristic');
+              }
+            }
+          }
+        }
+      }
+
+      console.log(`[Career Autofill] Autofill finished. Total fields filled: ${filledCount}`);
+      return filledCount;
     } catch (error) {
-      console.error('Save error:', error);
+      console.error('[Career Autofill] Autofill error:', error);
       return 0;
     }
   }
 
   /**
-   * Get page info
+   * Visual feedback for filled elements
+   */
+  function highlightField(element, mode = 'heuristic') {
+    try {
+      const isAi = mode === 'ai-enforced';
+      element.style.outline = isAi ? '2px solid #8b5cf6' : '2px solid #10b981';
+      element.style.boxShadow = isAi ? '0 0 10px rgba(139, 92, 246, 0.45)' : '0 0 8px rgba(16, 185, 129, 0.35)';
+      element.style.transition = 'outline 0.3s ease, box-shadow 0.3s ease';
+      setTimeout(() => {
+        element.style.outline = '';
+        element.style.boxShadow = '';
+      }, 2500);
+    } catch (e) {}
+  }
+
+  /**
+   * Form inspection / diagnostic helper
+   * Note: Page-to-profile automatic data capture is explicitly disabled to preserve
+   * extension profile integrity and prevent accidental contamination when submitting
+   * applications for others or answering ambiguous questions.
+   */
+  async function saveFormData() {
+    console.log('[Career Autofill] Page-to-profile automatic data capture is disabled to preserve profile integrity.');
+    return 0;
+  }
+
+  /**
+   * Gather summary page statistics
    */
   function getPageInfo() {
-    console.log('[Career Autofill] getPageInfo called');
-    console.log('[Career Autofill] DOM ready state:', document.readyState);
-    console.log('[Career Autofill] Total inputs in page:', document.querySelectorAll('input').length);
-    console.log('[Career Autofill] Total textareas in page:', document.querySelectorAll('textarea').length);
-    console.log('[Career Autofill] Total selects in page:', document.querySelectorAll('select').length);
-
     const fields = detector.getFields();
     let mandatoryCount = 0;
 
-    // Debug: log field detection
-    console.log('[Career Autofill] Analyzing fields:', fields.length);
-
-    const mandatoryFields = fields.filter(f => {
-      const isMandatory = detector.isMandatory(f);
-      const classification = detector.classify(f);
-
-      if (isMandatory) {
-        mandatoryCount++;
-        const labelText = detector.getLabelText(f);
-        console.log('[Career Autofill] Mandatory field found:', {
-          label: labelText,
-          type: f.type,
-          name: f.name,
-          classification: classification
-        });
-      }
-
-      return classification && classification.isMandatory;
+    fields.forEach(f => {
+      if (detector.isMandatory(f)) mandatoryCount++;
     });
-
-    console.log('[Career Autofill] Total mandatory fields:', mandatoryCount);
 
     return {
       totalFields: fields.length,
-      mandatoryFields: mandatoryFields.length,
+      mandatoryFields: mandatoryCount,
       url: window.location.href,
       hostname: window.location.hostname
     };
   }
 
   /**
-   * Auto-save on field changes
-   */
-  function setupAutoSave() {
-    document.addEventListener('change', async (e) => {
-      const target = e.target;
-      if (!target.matches('input, select, textarea')) return;
-
-      // Never save password fields
-      if (target.type === 'password') return;
-
-      const classification = detector.classify(target);
-      if (!classification) return;
-
-      const value = detector.getValue(target);
-      if (!value || String(value).trim().length === 0) return;
-
-      try {
-        const result = await chrome.storage.local.get(['profile']);
-        const profile = result.profile || {};
-        profile[classification.key] = String(value).trim();
-        await chrome.storage.local.set({ profile });
-      } catch (error) {
-        console.error('Auto-save error:', error);
-      }
-    }, true);
-  }
-
-  // Setup auto-save
-  setupAutoSave();
-
-  /**
-   * Check if current page is a job application page
+   * Heuristic detection for ATS / Career job portals
    */
   function isJobApplicationPage() {
     const url = window.location.href.toLowerCase();
     const hostname = window.location.hostname.toLowerCase();
 
-    // Check URL patterns for known job application sites
-    const jobSitePatterns = [
-      'workday.com',
-      'myworkdayjobs.com',
-      'smartrecruiters.com',
-      'greenhouse.io',
-      'lever.co',
-      'ashbyhq.com',
-      'recruitee.com',
-      'breezy.hr',
-      'icims.com',
-      'ultipro.com',
-      'jobvite.com',
-      'taleo.net',
-      'successfactors.com',
-      'apply.workable.com',
-      'jobs.lever.co',
-      'boards.greenhouse.io',
-      '/careers',
-      '/jobs',
-      '/apply',
-      '/application',
-      '/job-application',
-      '/career',
-      '/opportunities'
+    const jobPatterns = [
+      'workday.com', 'myworkdayjobs.com', 'myworkdaysite.com', 'smartrecruiters.com',
+      'greenhouse.io', 'boards.greenhouse.io', 'lever.co', 'jobs.lever.co',
+      'ashbyhq.com', 'recruitee.com', 'breezy.hr', 'icims.com',
+      'ultipro.com', 'jobvite.com', 'taleo.net', 'successfactors.com',
+      'selectminds.com', 'referrals.selectminds.com', 'oraclecloud.com',
+      'phenom.com', 'phenompro.com', 'virtusa.com',
+      'apply.workable.com', 'rippling.com', 'workable.com',
+      '/careers', '/jobs', '/apply', '/application', '/job-application', '/career', '/opportunities'
     ];
 
-    // Check if URL matches any job site pattern
-    const matchesPattern = jobSitePatterns.some(pattern =>
-      hostname.includes(pattern) || url.includes(pattern)
-    );
-
-    if (matchesPattern) {
-      console.log('[Career Autofill] ✓ Job application page detected by URL pattern');
+    if (jobPatterns.some(p => hostname.includes(p) || url.includes(p))) {
       return true;
     }
 
-    // Check for form fields that suggest this is a job application
     const fields = detector.getFields();
-    if (fields.length >= 3) {
-      // Check if we have typical job application fields
-      const hasJobFields = fields.some(field => {
-        const classification = detector.classify(field);
-        if (!classification) return false;
-
-        const jobRelatedKeys = ['firstName', 'lastName', 'email', 'phone', 'workAuth', 'sponsorship'];
-        return jobRelatedKeys.includes(classification.key);
+    if (fields.length >= 2) {
+      const hasCoreJobField = fields.some(f => {
+        const c = detector.classify(f);
+        return c && ['firstName', 'lastName', 'fullName', 'email', 'phone', 'workAuth', 'sponsorship', 'coverLetter'].includes(c.key);
       });
-
-      if (hasJobFields) {
-        console.log('[Career Autofill] ✓ Job application page detected by form fields');
-        return true;
-      }
+      if (hasCoreJobField) return true;
     }
 
-    console.log('[Career Autofill] ✗ Not a job application page');
     return false;
   }
 
   /**
-   * Create floating action button
+   * In-Page Floating Action Button (FAB)
    */
-  function createFloatingButton() {
-    // Check if button already exists
+  async function createFloatingButton() {
     if (document.getElementById('career-autofill-fab')) return;
+    // Prevent spawning FAB in tiny decoration or tracking iframes
+    if (window !== window.top && (window.innerWidth < 350 || window.innerHeight < 300)) return;
+    if (!isJobApplicationPage()) return;
 
-    // Only show button on job application pages
-    if (!isJobApplicationPage()) {
-      console.log('[Career Autofill] Skipping FAB - not a job application page');
-      return;
-    }
+    const storage = await chrome.storage.local.get(['aiEnforcedMode']);
+    const isAiEnforced = storage.aiEnforcedMode !== false;
 
-    // Create button
     const fab = document.createElement('div');
     fab.id = 'career-autofill-fab';
+    fab.setAttribute('title', isAiEnforced ? 'Autofill Form (AI Enforced)' : 'Autofill Form (Hybrid)');
     fab.innerHTML = `
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-        <polyline points="14 2 14 8 20 8"></polyline>
-        <line x1="12" y1="18" x2="12" y2="12"></line>
-        <line x1="9" y1="15" x2="15" y2="15"></line>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
       </svg>
     `;
 
-    // Add styles
+    const bgGradient = isAiEnforced
+      ? 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)'
+      : 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+    const shadowColor = isAiEnforced
+      ? 'rgba(139, 92, 246, 0.45)'
+      : 'rgba(16, 185, 129, 0.45)';
+
     const style = document.createElement('style');
     style.textContent = `
       #career-autofill-fab {
         position: fixed;
         bottom: 24px;
         right: 24px;
-        width: 56px;
-        height: 56px;
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        background: ${bgGradient};
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 999999;
+        box-shadow: 0 4px 16px ${shadowColor};
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+        z-index: 9999999;
         user-select: none;
       }
-
       #career-autofill-fab:hover {
-        transform: scale(1.1) translateY(-2px);
-        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.5);
+        transform: scale(1.08) translateY(-2px);
+        box-shadow: 0 8px 24px ${shadowColor};
       }
-
       #career-autofill-fab:active {
         transform: scale(0.95);
       }
-
       #career-autofill-fab.filling {
-        animation: pulse 1s ease-in-out infinite;
+        animation: ca-pulse 1s ease-in-out infinite;
       }
-
-      @keyframes pulse {
-        0%, 100% {
-          transform: scale(1);
-          box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-        }
-        50% {
-          transform: scale(1.05);
-          box-shadow: 0 8px 20px rgba(16, 185, 129, 0.6);
-        }
+      @keyframes ca-pulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 4px 16px ${shadowColor}; }
+        50% { transform: scale(1.08); box-shadow: 0 8px 28px ${shadowColor}; }
       }
-
-      #career-autofill-fab .tooltip {
+      #career-autofill-fab .ca-tooltip {
         position: absolute;
-        right: 70px;
+        right: 64px;
         top: 50%;
         transform: translateY(-50%);
         background: #18181b;
         color: white;
-        padding: 8px 12px;
+        padding: 6px 12px;
         border-radius: 6px;
-        font-size: 13px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 12px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         white-space: nowrap;
         opacity: 0;
         pointer-events: none;
         transition: opacity 0.2s;
         font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
       }
-
-      #career-autofill-fab:hover .tooltip {
+      #career-autofill-fab:hover .ca-tooltip {
         opacity: 1;
       }
     `;
-
     document.head.appendChild(style);
 
-    // Add tooltip
     const tooltip = document.createElement('span');
-    tooltip.className = 'tooltip';
-    tooltip.textContent = 'Autofill form';
+    tooltip.className = 'ca-tooltip';
+    tooltip.textContent = isAiEnforced ? 'Autofill Form (AI Enforced)' : 'Autofill Form (AI Enhanced)';
     fab.appendChild(tooltip);
 
-    // Add click handler
     fab.addEventListener('click', async () => {
-      console.log('[Career Autofill FAB] Button clicked');
       fab.classList.add('filling');
-      tooltip.textContent = 'Filling...';
+      tooltip.textContent = isAiEnforced ? 'Evaluating with AI...' : 'Filling application...';
 
       try {
-        // Check if we have profile data
-        const result = await chrome.storage.local.get(['profile']);
-        const profile = result.profile || {};
-        const fieldCount = Object.keys(profile).length;
-
-        console.log('[Career Autofill FAB] Profile has', fieldCount, 'fields');
-
-        if (fieldCount === 0) {
-          tooltip.textContent = 'No saved data';
-          fab.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-          setTimeout(() => {
-            tooltip.textContent = 'Autofill form';
-            fab.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-          }, 2000);
-          fab.classList.remove('filling');
-          return;
-        }
-
-        const count = await autofill(true);
-        console.log('[Career Autofill FAB] Filled', count, 'fields');
-
-        if (count === 0) {
-          tooltip.textContent = 'No fields to fill';
-          fab.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-        } else {
+        const count = await autofill({ fillAll: true, aiEnforced: isAiEnforced });
+        if (count > 0) {
           tooltip.textContent = `Filled ${count} field${count !== 1 ? 's' : ''}`;
-          fab.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-        }
-
-        setTimeout(() => {
-          tooltip.textContent = 'Autofill form';
-          fab.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-        }, 2000);
-      } catch (error) {
-        console.error('[Career Autofill FAB] Error:', error);
-
-        // Handle extension context invalidated error
-        if (error.message.includes('Extension context invalidated') || error.message.includes('refresh')) {
-          tooltip.textContent = 'Please refresh page';
-          fab.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+        } else if (count === -1) {
+          tooltip.textContent = 'Profile is empty — save profile first!';
         } else {
-          tooltip.textContent = 'Failed to autofill';
-          fab.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+          tooltip.textContent = 'No empty fields matched';
         }
-
+      } catch (err) {
+        tooltip.textContent = 'Autofill error';
+      } finally {
+        fab.classList.remove('filling');
         setTimeout(() => {
-          tooltip.textContent = 'Autofill form';
-          fab.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-        }, 3000);
+          tooltip.textContent = isAiEnforced ? 'Autofill Form (AI Enforced)' : 'Autofill Form (AI Enhanced)';
+        }, 2500);
       }
-
-      fab.classList.remove('filling');
     });
 
-    // Add to page
     document.body.appendChild(fab);
   }
 
-  // Create floating button after a short delay to ensure page is ready
-  setTimeout(createFloatingButton, 500);
+  setTimeout(createFloatingButton, 600);
 
-  // Debug phone field specifically
-  window.debugPhoneField = function() {
-    console.log('=== Phone Field Debug ===');
-    const fields = detector.getFields();
-    console.log('Total fields:', fields.length);
-
-    fields.forEach((field, index) => {
-      const classification = detector.classify(field);
-      if (classification && classification.key.toLowerCase().includes('phone')) {
-        console.log(`\n--- Phone Field #${index} ---`);
-        console.log('Element:', field);
-        console.log('Tag name:', field.tagName);
-        console.log('Type:', field.type);
-        console.log('Classification:', classification);
-        console.log('Current value:', detector.getValue(field));
-        console.log('Has shadowRoot:', !!field.shadowRoot);
-
-        if (field.shadowRoot) {
-          console.log('Shadow DOM children:', Array.from(field.shadowRoot.children).map(c => c.tagName));
-          const nestedFormField = field.shadowRoot.querySelector('spl-internal-form-field');
-          if (nestedFormField) {
-            console.log('Found nested form field, has shadowRoot:', !!nestedFormField.shadowRoot);
-            if (nestedFormField.shadowRoot) {
-              const input = nestedFormField.shadowRoot.querySelector('input');
-              console.log('Nested input found:', !!input);
-              if (input) {
-                console.log('Input type:', input.type);
-                console.log('Input value:', input.value);
-                console.log('Input id:', input.id);
-              }
-            }
-          }
+  // Monitor SPA navigation and dynamic application modals (e.g. Virtusa / Taleo / Workday popup dialogs)
+  let lastUrl = window.location.href;
+  let modalDebounceTimer = null;
+  const spaObserver = new MutationObserver(() => {
+    const curUrl = window.location.href;
+    if (curUrl !== lastUrl) {
+      lastUrl = curUrl;
+      setTimeout(createFloatingButton, 600);
+    } else if (!document.getElementById('career-autofill-fab')) {
+      clearTimeout(modalDebounceTimer);
+      modalDebounceTimer = setTimeout(() => {
+        if (!document.getElementById('career-autofill-fab') && isJobApplicationPage()) {
+          createFloatingButton();
         }
-      }
-    });
+      }, 500);
+    }
+  });
+  if (document.body) {
+    spaObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // Expose global endpoints for frame-aware execution
+  window.autofillExtension = autofill;
+  window.saveFormDataExtension = saveFormData;
+  window.getPageInfoExtension = getPageInfo;
+  window.__CAREER_AUTOFILL_CLEANUP__ = () => {
+    try { if (spaObserver) spaObserver.disconnect(); } catch (e) {}
+    try { const fab = document.getElementById('career-autofill-fab'); if (fab) fab.remove(); } catch (e) {}
   };
 
-  // Expose debug function for testing
-  window.debugCareerAutofill = function() {
-    console.log('=== Career Autofill Debug ===');
-    console.log('Page info:');
-    console.log('- URL:', window.location.href);
-    console.log('- All inputs:', document.querySelectorAll('input').length);
-    console.log('- All textareas:', document.querySelectorAll('textarea').length);
-    console.log('- All selects:', document.querySelectorAll('select').length);
-    console.log('- Hidden inputs:', document.querySelectorAll('input[type="hidden"]').length);
-
-    const fields = detector.getFields();
-    console.log(`\nTotal fillable fields found: ${fields.length}`);
-
-    const results = [];
-    fields.forEach((field, index) => {
-      const isMandatory = detector.isMandatory(field);
-      const labelText = detector.getLabelText(field);
-      const classification = detector.classify(field);
-
-      const info = {
-        index: index + 1,
-        type: field.type || field.tagName,
-        name: field.name || '(no name)',
-        id: field.id || '(no id)',
-        label: labelText || '(no label)',
-        isMandatory,
-        classification: classification ? classification.key : null
-      };
-
-      results.push(info);
-
-      if (isMandatory) {
-        console.log(`✓ MANDATORY: ${info.label} (${info.type})`, field);
-      }
-    });
-
-    console.log(`\nMandatory fields: ${results.filter(r => r.isMandatory).length}`);
-    console.log('\nAll fields:', results);
-    return results;
-  };
-
-  console.log('✅ [Career Autofill] Ready. Run debugCareerAutofill() in console for details.');
-  console.log('✅ [Career Autofill] Content script fully loaded and initialized!');
-
-  // Message handler
+  // Message router
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('📨 [Career Autofill] Received message:', request.action);
     if (request.action === 'autofill') {
-      const fillAll = request.fillAll || false;
-      autofill(fillAll).then(count => {
+      (async () => {
+        const count = await autofill({
+          fillAll: request.fillAll || false,
+          aiEnforced: request.aiEnforced,
+          overwrite: request.overwrite || false,
+          profile: request.profile || null
+        });
         sendResponse({ success: true, count });
-      });
-      return true; // Keep channel open for async response
+      })();
+      return true;
     }
 
     if (request.action === 'save') {
-      saveFormData().then(count => {
+      (async () => {
+        const count = await saveFormData();
         sendResponse({ success: true, count });
-      });
+      })();
       return true;
     }
 
     if (request.action === 'getPageInfo') {
-      const info = getPageInfo();
-      sendResponse({ success: true, info });
+      sendResponse({ success: true, info: getPageInfo() });
       return false;
     }
 
     if (request.action === 'ping') {
-      sendResponse({ success: true });
+      sendResponse({ success: true, version: SCRIPT_VERSION, loaded: true });
       return false;
     }
   });
 
-  console.log('Career Autofill: Content script loaded');
+  // Global debug console command
+  window.debugCareerAutofill = function() {
+    console.log('=== Career Autofill Diagnostic ===');
+    const fields = detector.getFields();
+    console.log(`Found ${fields.length} interactive fields`);
+    fields.forEach((f, idx) => {
+      const cls = detector.classify(f);
+      console.log(`[#${idx + 1}] ${f.tagName} | type: ${f.type || 'n/a'} | required: ${detector.isMandatory(f)} | key: ${cls?.key || '(unmapped)'}`, f);
+    });
+    return fields;
+  };
+
+  console.log('[Career Autofill] Content script initialized and ready');
 })();

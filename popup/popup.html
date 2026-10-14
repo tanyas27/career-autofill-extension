@@ -10,193 +10,327 @@
   <div class="container">
     <!-- Header -->
     <header>
-      <h1>Career Autofill</h1>
-      <p class="subtitle">Smart form filling for job applications</p>
+      <div class="header-top">
+        <h1>Career Autofill</h1>
+        <span id="aiBadge" class="ai-badge badge-loading" title="Checking On-Device Gemini Nano status...">
+          <span class="badge-dot"></span> <span id="aiBadgeText">Checking AI...</span>
+        </span>
+      </div>
+      <p class="subtitle">Smart ATS Autofill with On-Device Semantic AI</p>
     </header>
 
-    <!-- Current Page Actions -->
+    <!-- Current Page Actions Card -->
     <section class="card">
-      <h2>Current Page</h2>
+      <div class="card-header-flex">
+        <h2>Active Application Page</h2>
+        <span id="pageBadge" class="status-pill">Detecting</span>
+      </div>
+      
       <div class="page-info">
         <div class="info-row">
-          <span class="label">Status</span>
-          <span id="pageStatus">Loading...</span>
+          <span class="label">Page Status</span>
+          <span id="pageStatus">Scanning page...</span>
         </div>
         <div class="info-row">
-          <span class="label">Mandatory fields</span>
+          <span class="label">Required Fields</span>
           <span id="fieldCount">-</span>
         </div>
+        <div class="info-action-row">
+          <span class="label">Page Controls</span>
+          <div class="header-actions">
+            <button id="reloadExtBtn" class="btn-ghost-sm dev-only" title="Reload extension and active page" type="button" style="display: none;">Reload</button>
+            <button id="rescanBtn" class="btn-ghost-sm" title="Re-scan page for fields" type="button">Re-scan</button>
+          </div>
+        </div>
       </div>
-      <div class="button-group">
-        <button id="autofillBtn" class="btn btn-primary">
-          Autofill
-        </button>
-        <button id="saveBtn" class="btn btn-secondary">
-          Save Form
+
+      <div id="emptyProfileBanner" class="alert-banner" style="display: none;">
+        <span class="alert-icon">!</span>
+        <div class="alert-content">
+          <strong>Profile is empty!</strong>
+          <p>Autofill needs your saved details to match fields.</p>
+          <button type="button" id="loadSampleBtn" class="btn-link">Load Sample Profile</button>
+        </div>
+      </div>
+
+      <div class="action-btn-wrapper">
+        <button id="autofillBtn" class="btn btn-primary btn-full">
+          Autofill Form
         </button>
       </div>
-      <div class="data-buttons" style="margin-top: 8px;">
-        <button id="exportBtn" class="btn btn-secondary">
-          Export
-        </button>
-        <button id="importBtn" class="btn btn-secondary">
-          Import
-        </button>
-        <button id="clearBtn" class="btn btn-danger">
-          Clear
-        </button>
+
+      <div class="data-buttons">
+        <button id="exportBtn" class="btn btn-ghost" title="Export Profile as JSON">Export</button>
+        <button id="importBtn" class="btn btn-ghost" title="Import Profile from JSON">Import</button>
+        <button id="clearBtn" class="btn btn-ghost-danger" title="Clear all stored profile data">Clear</button>
       </div>
       <input type="file" id="importFile" accept=".json" style="display: none;">
-      <div class="debug-box">
-        <label>
+
+      <div class="mode-toggles">
+        <label class="toggle-control ai-enforced-control">
+          <input type="checkbox" id="aiEnforcedMode" checked>
+          <div class="toggle-content">
+            <span class="toggle-title">
+              <span class="purple-dot"></span> AI Enforced Mode (Recommended)
+            </span>
+            <span class="toggle-desc">Enforce deep semantic AI arbitration. Disables blind heuristic guessing.</span>
+          </div>
+        </label>
+        <label class="toggle-control">
           <input type="checkbox" id="fillAllFields" checked>
-          <span>Fill all fields (debug mode)</span>
+          <div class="toggle-content">
+            <span class="toggle-title">Fill all fields (including optional)</span>
+            <span class="toggle-desc">Populate all matching fields from your saved profile.</span>
+          </div>
+        </label>
+        <label class="toggle-control">
+          <input type="checkbox" id="overwriteFields">
+          <div class="toggle-content">
+            <span class="toggle-title">Overwrite already filled fields</span>
+            <span class="toggle-desc">Re-populate fields that already contain values on the page.</span>
+          </div>
         </label>
       </div>
     </section>
 
-    <!-- View Toggle -->
-    <section class="card">
-      <div class="view-toggle">
-        <button id="viewFormBtn" class="btn-view active">
-          Form
-        </button>
-        <button id="viewJsonBtn" class="btn-view">
-          JSON
-        </button>
-      </div>
-    </section>
+    <!-- Main Navigation Tabs -->
+    <nav class="view-toggle">
+      <button id="viewFormBtn" class="btn-view active">Profile Form</button>
+      <button id="viewJsonBtn" class="btn-view">JSON Editor</button>
+    </nav>
 
-    <!-- Profile Form -->
-    <section class="card" id="formView">
-      <h2>Profile</h2>
-      <p class="hint">Extension maps similar field names automatically (e.g., "First Name" → "Given Name")</p>
+    <!-- Profile Form View -->
+    <main id="formView" class="card">
       <form id="profileForm">
-        <div class="form-group">
-          <label for="firstName">First Name</label>
-          <input type="text" id="firstName" name="firstName" placeholder="John">
-        </div>
-
-        <div class="form-group">
-          <label for="lastName">Last Name</label>
-          <input type="text" id="lastName" name="lastName" placeholder="Doe">
-        </div>
-
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" name="email" placeholder="john@example.com">
-        </div>
-
-        <div class="form-group">
-          <label for="phone">Phone</label>
-          <input type="tel" id="phone" name="phone" placeholder="+1 (555) 000-0000">
-        </div>
-
-        <div class="form-group">
-          <label for="address">Address</label>
-          <input type="text" id="address" name="address" placeholder="123 Main Street">
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="city">City</label>
-            <input type="text" id="city" name="city" placeholder="New York">
+        <!-- Section: Personal Info -->
+        <div class="form-section">
+          <h3 class="section-title">Personal & Contact</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name</label>
+              <input type="text" id="firstName" name="firstName" placeholder="Alex">
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name</label>
+              <input type="text" id="lastName" name="lastName" placeholder="Morgan">
+            </div>
           </div>
+
           <div class="form-group">
-            <label for="state">State</label>
-            <input type="text" id="state" name="state" placeholder="NY">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="alex.morgan@example.com">
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="+1 (555) 234-5678">
+          </div>
+
+          <div class="form-group">
+            <label for="address">Street Address</label>
+            <input type="text" id="address" name="address" placeholder="100 Market St, Apt 4B">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="city">City</label>
+              <input type="text" id="city" name="city" placeholder="San Francisco">
+            </div>
+            <div class="form-group">
+              <label for="state">State / Province</label>
+              <input type="text" id="state" name="state" placeholder="CA">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="zipCode">ZIP / Postal Code</label>
+              <input type="text" id="zipCode" name="zipCode" placeholder="94105">
+            </div>
+            <div class="form-group">
+              <label for="country">Country</label>
+              <input type="text" id="country" name="country" placeholder="United States">
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="zipCode">ZIP Code</label>
-          <input type="text" id="zipCode" name="zipCode" placeholder="10001">
+        <!-- Section: Links & Employment -->
+        <div class="form-section">
+          <h3 class="section-title">Links & Employment</h3>
+          <div class="form-group">
+            <label for="linkedin">LinkedIn URL</label>
+            <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/alexmorgan">
+          </div>
+
+          <div class="form-group">
+            <label for="github">GitHub URL</label>
+            <input type="url" id="github" name="github" placeholder="https://github.com/alexmorgan">
+          </div>
+
+          <div class="form-group">
+            <label for="portfolio">Portfolio / Website</label>
+            <input type="url" id="portfolio" name="portfolio" placeholder="https://alexmorgan.dev">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="currentCompany">Current / Most Recent Company</label>
+              <input type="text" id="currentCompany" name="currentCompany" placeholder="Stripe">
+            </div>
+            <div class="form-group">
+              <label for="currentTitle">Current Job Title</label>
+              <input type="text" id="currentTitle" name="currentTitle" placeholder="Senior Software Engineer">
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="country">Country</label>
-          <input type="text" id="country" name="country" placeholder="United States">
+        <!-- Section: Custom Fields & Experience -->
+        <div class="form-section">
+          <div class="section-title-flex">
+            <h3 class="section-title">Custom Fields & Experience</h3>
+            <span class="ai-tag">Dynamic Match</span>
+          </div>
+          <p class="hint">Add your work experience, skills, education, or niche ATS questions. AI and heuristics will map them to matching fields.</p>
+
+          <div class="custom-presets-bar">
+            <span class="presets-label">Quick Add:</span>
+            <div class="preset-chips">
+              <button type="button" class="preset-chip" data-label="Work Experience" data-key="workExperience" data-multiline="true">+ Work Experience</button>
+              <button type="button" class="preset-chip" data-label="Years of Experience" data-key="yearsOfExperience" data-multiline="false">+ Years of Exp</button>
+              <button type="button" class="preset-chip" data-label="Technical Skills" data-key="skills" data-multiline="true">+ Skills</button>
+              <button type="button" class="preset-chip" data-label="Highest Education" data-key="education" data-multiline="false">+ Education</button>
+              <button type="button" class="preset-chip" data-label="Certifications" data-key="certifications" data-multiline="true">+ Certifications</button>
+            </div>
+          </div>
+
+          <div id="customFieldsContainer" class="custom-fields-container">
+            <!-- Dynamically rendered custom field rows -->
+          </div>
+
+          <button type="button" id="addCustomFieldBtn" class="btn btn-secondary btn-full add-custom-field-btn">
+            + Add Custom Field
+          </button>
         </div>
 
-        <div class="form-group">
-          <label for="linkedin">LinkedIn URL</label>
-          <input type="url" id="linkedin" name="linkedin" placeholder="linkedin.com/in/johndoe">
+        <!-- Section: Legal & Work Authorization (Country-Aware) -->
+        <div class="form-section">
+          <div class="section-title-flex">
+            <h3 class="section-title">Work Authorization & Citizenship</h3>
+            <span class="ai-tag">Country-Aware</span>
+          </div>
+          <p class="hint">Specify your authorized country/countries so the extension dynamically answers location-specific visa questions.</p>
+
+          <div class="form-group">
+            <label for="workAuthCountries">Authorized Countries (Citizenship / Permanent Residency)</label>
+            <input type="text" id="workAuthCountries" name="workAuthCountries" placeholder="e.g. United States, Canada, India">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="workAuth">Authorized in above country?</label>
+              <select id="workAuth" name="workAuth">
+                <option value="">Select...</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="sponsorship">Require Sponsorship there?</label>
+              <select id="sponsorship" name="sponsorship">
+                <option value="">Select...</option>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="sponsorshipOtherCountries">Require Sponsorship for other countries / abroad?</label>
+            <select id="sponsorshipOtherCountries" name="sponsorshipOtherCountries">
+              <option value="Yes">Yes (Require visa sponsorship if job is outside above countries)</option>
+              <option value="No">No (Do not require sponsorship)</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="noticePeriod">Earliest Start / Notice Period</label>
+              <input type="text" id="noticePeriod" name="noticePeriod" placeholder="2 weeks / Immediately">
+            </div>
+            <div class="form-group">
+              <label for="salaryExpectations">Desired Salary / Compensation</label>
+              <input type="text" id="salaryExpectations" name="salaryExpectations" placeholder="$150,000 / Negotiable">
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="github">GitHub URL</label>
-          <input type="url" id="github" name="github" placeholder="github.com/johndoe">
+        <!-- Section: Long-Form & AI-Disambiguated Answers -->
+        <div class="form-section">
+          <div class="section-title-flex">
+            <h3 class="section-title">Long-Form & Essay Answers</h3>
+            <span class="ai-tag">AI Disambiguated</span>
+          </div>
+          <p class="hint">On-Device Gemini Nano matches each prompt below to the exact corresponding textarea on complex ATS applications.</p>
+          <div class="utility-action-bar">
+            <span class="utility-desc">Auto-draft tailored answers from your profile:</span>
+            <button type="button" id="generateEssaysBtn" class="btn btn-utility">Generate AI Essays</button>
+          </div>
+
+          <div class="form-group">
+            <label for="whyUs">Why this company / role?</label>
+            <textarea id="whyUs" name="whyUs" rows="3" placeholder="Why you are interested in joining and what excites you about this specific mission..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="projectHighlight">Key Technical Project / Challenge</label>
+            <textarea id="projectHighlight" name="projectHighlight" rows="3" placeholder="A notable challenge, system design, or proud achievement you spearheaded..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="coverLetter">Cover Letter / Note to Hiring Manager</label>
+            <textarea id="coverLetter" name="coverLetter" rows="4" placeholder="Standard cover letter or introductory message..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="aboutMe">Professional Summary / About Me</label>
+            <textarea id="aboutMe" name="aboutMe" rows="3" placeholder="Brief elevator pitch summarizing your career background and skills..."></textarea>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="portfolio">Portfolio URL</label>
-          <input type="url" id="portfolio" name="portfolio" placeholder="johndoe.com">
-        </div>
-
-        <div class="form-group">
-          <label for="currentCompany">Current Company</label>
-          <input type="text" id="currentCompany" name="currentCompany" placeholder="Acme Inc">
-        </div>
-
-        <div class="form-group">
-          <label for="currentTitle">Current Title</label>
-          <input type="text" id="currentTitle" name="currentTitle" placeholder="Software Engineer">
-        </div>
-
-        <div class="form-group">
-          <label for="workAuth">Work Authorization</label>
-          <select id="workAuth" name="workAuth">
-            <option value="">Select...</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="sponsorship">Need Sponsorship?</label>
-          <select id="sponsorship" name="sponsorship">
-            <option value="">Select...</option>
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
-          </select>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-full">
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top: 10px;">
           Save Profile
         </button>
       </form>
-    </section>
+    </main>
 
-    <!-- JSON Editor -->
-    <section class="card" id="jsonView" style="display: none;">
-      <h2>JSON Editor</h2>
-      <p class="hint">Direct JSON editing for advanced users and custom fields</p>
+    <!-- JSON Editor View -->
+    <main id="jsonView" class="card" style="display: none;">
+      <div class="card-header-flex">
+        <h2>Raw Profile Data</h2>
+        <span class="json-stats" id="jsonStats">0 fields</span>
+      </div>
+      <p class="hint">Directly view and edit raw JSON or add custom fields for niche ATS questions.</p>
 
       <div class="json-controls">
-        <button id="formatJsonBtn" class="btn btn-secondary" style="font-size: 12px; padding: 8px 12px;">
-          Format
-        </button>
-        <button id="copyJsonBtn" class="btn btn-secondary" style="font-size: 12px; padding: 8px 12px;">
-          Copy
-        </button>
-        <span class="json-stats" id="jsonStats"></span>
+        <button id="formatJsonBtn" class="btn btn-secondary btn-sm">Format</button>
+        <button id="copyJsonBtn" class="btn btn-secondary btn-sm">Copy</button>
       </div>
 
-      <textarea id="jsonEditor" rows="12" spellcheck="false"></textarea>
+      <textarea id="jsonEditor" rows="14" spellcheck="false"></textarea>
 
       <button id="saveJsonBtn" class="btn btn-primary btn-full" style="margin-top: 12px;">
-        Save JSON
+        Save JSON Changes
       </button>
-    </section>
+    </main>
 
-    <!-- Debug Section -->
-    <section class="card">
-      <button id="debugBtn" class="btn btn-secondary btn-full">
-        Debug Fields (Open Console)
+    <!-- Debug & Help Footer -->
+    <footer class="card footer-card">
+      <button id="debugBtn" class="btn btn-ghost btn-full">
+        Run Page Diagnostic (Console F12)
       </button>
-    </section>
+    </footer>
 
-    <!-- Toast notification -->
+    <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
   </div>
 

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workday ATS Simulator - Career Autofill Test Suite</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Global Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">⚡</span>
+        <span>Career Autofill Test Suite</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Hub</a>
+        <a href="workday.html" class="active">Workday</a>
+        <a href="greenhouse.html">Greenhouse / Lever</a>
+        <a href="smartrecruiters.html">SmartRecruiters</a>
+        <a href="taleo.html">Taleo Table</a>
+        <a href="tailwind-spa.html">Tailwind SPA</a>
+        <a href="iframe-test.html">Multi-Frame Iframe</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1 class="page-title">
+        Workday Application Simulator
+        <span class="badge-tag badge-workday">Workday ATS</span>
+      </h1>
+      <p class="page-subtitle">Tests Workday-specific patterns: <code>data-automation-id</code> containers, interactive <code>readonly</code> comboboxes, and country code protection.</p>
+    </div>
+
+    <!-- Interactive Toolbar -->
+    <div class="action-toolbar">
+      <div class="toolbar-info">
+        <span>Status:</span>
+        <span id="filledCountDisplay" class="stats-counter">0 of 15 fields filled</span>
+      </div>
+      <div class="toolbar-buttons">
+        <button type="button" id="inspectFormBtn" class="btn btn-secondary">🔍 Inspect Detector</button>
+        <button type="button" id="clearFormBtn" class="btn btn-danger">↺ Clear All Fields</button>
+      </div>
+    </div>
+
+    <!-- Workday Form Container -->
+    <form id="workdayForm" class="form-card" data-automation-id="workdayApplicationForm">
+
+      <!-- Section: Personal Information -->
+      <div class="card-section" data-automation-id="formSection">
+        <div class="section-header">
+          <h3>Personal & Contact Information</h3>
+          <span class="section-hint">Standard Workday layout</span>
+        </div>
+
+        <div class="form-grid grid-2">
+          <!-- First Name -->
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_firstName" data-automation-id="formLabel">
+              First Name <span class="required-asterisk">*</span>
+            </label>
+            <input type="text" id="wd_firstName" name="legalName.firstName" data-automation-id="legalName_firstName" required>
+          </div>
+
+          <!-- Last Name -->
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_lastName" data-automation-id="formLabel">
+              Last Name <span class="required-asterisk">*</span>
+            </label>
+            <input type="text" id="wd_lastName" name="legalName.lastName" data-automation-id="legalName_lastName" required>
+          </div>
+        </div>
+
+        <div class="form-grid" style="margin-top: 16px;">
+          <!-- Email Address -->
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_email" data-automation-id="formLabel">
+              Email Address <span class="required-asterisk">*</span>
+            </label>
+            <input type="email" id="wd_email" name="emailAddress" data-automation-id="email" required>
+          </div>
+        </div>
+
+        <!-- Phone Section with Country Code Combo (CRITICAL SKEPTICAL TEST) -->
+        <div class="form-grid grid-2" style="margin-top: 16px;">
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_phoneCountryCode" data-automation-id="formLabel">
+              Country Phone Code <span class="helper-text">(Protected from country fill)</span>
+            </label>
+            <div class="workday-combobox-wrapper">
+              <input type="text" id="wd_phoneCountryCode" name="phoneCountryCode" role="combobox" aria-haspopup="listbox" data-automation-id="phoneCountryCode" readonly value="+1 (USA)">
+              <span class="combo-arrow">▼</span>
+            </div>
+          </div>
+
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_phone" data-automation-id="formLabel">
+              Phone Number <span class="required-asterisk">*</span>
+            </label>
+            <input type="tel" id="wd_phone" name="phoneNumber" data-automation-id="phoneNumber" required>
+          </div>
+        </div>
+
+        <!-- Address & Workday Readonly Comboboxes -->
+        <div class="form-grid" style="margin-top: 16px;">
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_address" data-automation-id="formLabel">
+              Address Line 1 <span class="required-asterisk">*</span>
+            </label>
+            <input type="text" id="wd_address" name="addressLine1" data-automation-id="addressLine1" required>
+          </div>
+        </div>
+
+        <div class="form-grid grid-3" style="margin-top: 16px;">
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_city" data-automation-id="formLabel">
+              City <span class="required-asterisk">*</span>
+            </label>
+            <input type="text" id="wd_city" name="city" data-automation-id="city" required>
+          </div>
+
+          <!-- Workday State Dropdown (Readonly Combobox) -->
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_state" data-automation-id="formLabel">
+              State / Province <span class="required-asterisk">*</span>
+            </label>
+            <div class="workday-combobox-wrapper">
+              <input type="text" id="wd_state" name="state" role="combobox" data-automation-id="stateDropdown" aria-haspopup="listbox" readonly placeholder="Select State..." required>
+              <span class="combo-arrow">▼</span>
+            </div>
+          </div>
+
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_postal" data-automation-id="formLabel">
+              Postal Code <span class="required-asterisk">*</span>
+            </label>
+            <input type="text" id="wd_postal" name="postalCode" data-automation-id="postalCode" required>
+          </div>
+        </div>
+
+        <!-- Workday Country Dropdown (Readonly Combobox) -->
+        <div class="form-grid" style="margin-top: 16px;">
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_country" data-automation-id="formLabel">
+              Country <span class="required-asterisk">*</span>
+            </label>
+            <div class="workday-combobox-wrapper">
+              <input type="text" id="wd_country" name="country" role="combobox" data-automation-id="countryDropdown" aria-haspopup="listbox" readonly value="Select Country" required>
+              <span class="combo-arrow">▼</span>
+            </div>
+            <span class="helper-text">Simulates Workday's readonly country combobox. Must be detected as fillable even with <code>readonly</code>!</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Workday Experience & Links -->
+      <div class="card-section" data-automation-id="formSection">
+        <div class="section-header">
+          <h3>Professional Experience & Links</h3>
+          <span class="section-hint">Employment history</span>
+        </div>
+
+        <div class="form-grid grid-2">
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_company" data-automation-id="formLabel">Current / Most Recent Company</label>
+            <input type="text" id="wd_company" name="recentCompany" data-automation-id="company">
+          </div>
+
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_title" data-automation-id="formLabel">Current Job Title</label>
+            <input type="text" id="wd_title" name="jobTitle" data-automation-id="title">
+          </div>
+        </div>
+
+        <div class="form-grid grid-2" style="margin-top: 16px;">
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_linkedin" data-automation-id="formLabel">LinkedIn Profile URL</label>
+            <input type="url" id="wd_linkedin" name="socialLinkedIn" data-automation-id="linkedinUrl">
+          </div>
+
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_github" data-automation-id="formLabel">GitHub Profile URL</label>
+            <input type="url" id="wd_github" name="socialGitHub" data-automation-id="githubUrl">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Legal & Work Authorization (Workday Radio Groups) -->
+      <div class="card-section" data-automation-id="formSection">
+        <div class="section-header">
+          <h3>Work Authorization & Questionnaire</h3>
+          <span class="section-hint">Location-specific questions</span>
+        </div>
+
+        <div class="form-group" data-automation-id="formField" style="margin-bottom: 18px;">
+          <label data-automation-id="formLabel">
+            Are you legally authorized to work in the United States? <span class="required-asterisk">*</span>
+          </label>
+          <div class="radio-group-horizontal" role="radiogroup" aria-required="true">
+            <label class="choice-label">
+              <input type="radio" name="wd_us_work_auth" value="Yes" required>
+              <span>Yes</span>
+            </label>
+            <label class="choice-label">
+              <input type="radio" name="wd_us_work_auth" value="No" required>
+              <span>No</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" data-automation-id="formField" style="margin-bottom: 18px;">
+          <label data-automation-id="formLabel">
+            Will you now or in the future require visa sponsorship for employment? <span class="required-asterisk">*</span>
+          </label>
+          <div class="radio-group-horizontal" role="radiogroup" aria-required="true">
+            <label class="choice-label">
+              <input type="radio" name="wd_sponsorship" value="No" required>
+              <span>No</span>
+            </label>
+            <label class="choice-label">
+              <input type="radio" name="wd_sponsorship" value="Yes" required>
+              <span>Yes</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-grid grid-2">
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_notice" data-automation-id="formLabel">Notice Period / Earliest Start Date</label>
+            <input type="text" id="wd_notice" name="noticePeriod" data-automation-id="noticePeriod">
+          </div>
+
+          <div class="form-group" data-automation-id="formField">
+            <label for="wd_salary" data-automation-id="formLabel">Desired Salary / Compensation Expectations</label>
+            <input type="text" id="wd_salary" name="salaryExpectations" data-automation-id="salaryExpectations">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Long-Form Essay -->
+      <div class="card-section" data-automation-id="formSection">
+        <div class="section-header">
+          <h3>Questionnaire & Essays</h3>
+          <span class="section-hint">AI-disambiguated textareas</span>
+        </div>
+
+        <div class="form-group" data-automation-id="formField">
+          <label for="wd_whyUs" data-automation-id="formLabel">
+            Why are you interested in joining our organization?
+          </label>
+          <textarea id="wd_whyUs" name="whyUs" rows="3" data-automation-id="whyUsTextarea"></textarea>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+        <button type="submit" class="btn btn-primary">Submit Application</button>
+      </div>
+    </form>
+
+    <!-- Live Event Log -->
+    <div class="test-log-card">
+      <div class="test-log-header">
+        <span>Activity Log & Field Inspection</span>
+        <span>Console</span>
+      </div>
+      <div id="logBody" class="test-log-body"></div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

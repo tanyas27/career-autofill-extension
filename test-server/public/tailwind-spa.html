@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tailwind & Dynamic SPA Simulator - Career Autofill Test Suite</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Tailwind CSS ::after Pseudo-element Asterisk Simulation */
+    .tw-req::after {
+      content: ' *';
+      color: #ef4444;
+      font-weight: 700;
+    }
+    .spa-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+    }
+    .hydration-box {
+      border: 2px dashed #cbd5e1;
+      padding: 24px;
+      border-radius: 8px;
+      text-align: center;
+      background: #f8fafc;
+      margin-top: 16px;
+      transition: all 0.3s ease;
+    }
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #cbd5e1;
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Global Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">⚡</span>
+        <span>Career Autofill Test Suite</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Hub</a>
+        <a href="workday.html">Workday</a>
+        <a href="greenhouse.html">Greenhouse / Lever</a>
+        <a href="smartrecruiters.html">SmartRecruiters</a>
+        <a href="taleo.html">Taleo Table</a>
+        <a href="tailwind-spa.html" class="active">Tailwind SPA</a>
+        <a href="iframe-test.html">Multi-Frame Iframe</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1 class="page-title">
+        Tailwind CSS & Dynamic SPA Simulator
+        <span class="badge-tag badge-tailwind">Tailwind & SPA</span>
+      </h1>
+      <p class="page-subtitle">Tests CSS <code>::after</code> pseudo-element asterisks (Tailwind <code>after:content-['*']</code>) and delayed JavaScript client-side DOM hydration.</p>
+    </div>
+
+    <!-- Interactive Toolbar -->
+    <div class="action-toolbar">
+      <div class="toolbar-info">
+        <span>Status:</span>
+        <span id="filledCountDisplay" class="stats-counter">0 of 6 fields filled</span>
+        <span class="spa-badge" id="hydrationStatusBadge">SPA: Initial Mount</span>
+      </div>
+      <div class="toolbar-buttons">
+        <button type="button" id="hydrateAsyncBtn" class="btn btn-primary">⚡ Mount Async Section</button>
+        <button type="button" id="inspectFormBtn" class="btn btn-secondary">🔍 Inspect Detector</button>
+        <button type="button" id="clearFormBtn" class="btn btn-danger">↺ Clear All Fields</button>
+      </div>
+    </div>
+
+    <!-- Form Container -->
+    <form id="spaForm" class="form-card">
+
+      <!-- Section: Initial Static Inputs with Tailwind Pseudo Asterisks -->
+      <div class="card-section">
+        <div class="section-header">
+          <h3>Contact Details (Tailwind CSS <code>::after</code> Asterisks)</h3>
+          <span class="section-hint">Notice: Asterisks are generated via CSS, NOT text in DOM!</span>
+        </div>
+
+        <div class="form-grid grid-2">
+          <!-- First Name with CSS ::after Asterisk -->
+          <div class="form-group">
+            <label for="tw_fn" class="tw-req">First Name</label>
+            <input type="text" id="tw_fn" name="firstName" placeholder="Enter first name">
+          </div>
+
+          <!-- Last Name with CSS ::after Asterisk -->
+          <div class="form-group">
+            <label for="tw_ln" class="tw-req">Last Name</label>
+            <input type="text" id="tw_ln" name="lastName" placeholder="Enter last name">
+          </div>
+        </div>
+
+        <div class="form-grid grid-2" style="margin-top: 16px;">
+          <!-- Email with CSS ::after Asterisk -->
+          <div class="form-group">
+            <label for="tw_email" class="tw-req">Email Address</label>
+            <input type="email" id="tw_email" name="email" placeholder="you@example.com">
+          </div>
+
+          <!-- Phone with CSS ::after Asterisk -->
+          <div class="form-group">
+            <label for="tw_phone" class="tw-req">Phone Number</label>
+            <input type="tel" id="tw_phone" name="phone" placeholder="(555) 000-0000">
+          </div>
+        </div>
+
+        <div class="form-grid grid-2" style="margin-top: 16px;">
+          <div class="form-group">
+            <label for="tw_linkedin">LinkedIn Profile URL</label>
+            <input type="url" id="tw_linkedin" name="linkedin">
+          </div>
+
+          <div class="form-group">
+            <label for="tw_github">GitHub Profile URL</label>
+            <input type="url" id="tw_github" name="github">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Dynamic Hydration Zone -->
+      <div class="card-section">
+        <div class="section-header">
+          <h3>Dynamic Single-Page App Hydration Zone</h3>
+          <span class="section-hint">Tests extension dynamic scanning & "↻ Re-scan" button</span>
+        </div>
+
+        <div id="dynamicContainer">
+          <div class="hydration-box" id="placeholderPrompt">
+            <p style="font-weight: 600; color: #475569; margin-bottom: 6px;">Simulating Asynchronous SPA Hydration (React / Vue)</p>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 14px;">Click the button below to dynamically inject additional application questions after page load.</p>
+            <button type="button" id="triggerMountBtn" class="btn btn-primary">Mount Dynamic Questionnaire</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+        <button type="submit" class="btn btn-primary">Save Application</button>
+      </div>
+    </form>
+
+    <!-- Live Event Log -->
+    <div class="test-log-card">
+      <div class="test-log-header">
+        <span>Activity Log & Field Inspection</span>
+        <span>Console</span>
+      </div>
+      <div id="logBody" class="test-log-body"></div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    // Asynchronous Component Mounting Simulation
+    const dynamicContainer = document.getElementById('dynamicContainer');
+    const triggerMountBtn = document.getElementById('triggerMountBtn');
+    const hydrateAsyncBtn = document.getElementById('hydrateAsyncBtn');
+    const hydrationStatusBadge = document.getElementById('hydrationStatusBadge');
+
+    function mountDynamicFields() {
+      hydrationStatusBadge.innerHTML = '<span class="spinner"></span> Hydrating...';
+      setTimeout(() => {
+        dynamicContainer.innerHTML = `
+          <div class="form-grid grid-2" style="animation: fadeIn 0.3s ease;">
+            <div class="form-group">
+              <label for="tw_company">Current Employer</label>
+              <input type="text" id="tw_company" name="currentCompany">
+            </div>
+            <div class="form-group">
+              <label for="tw_title">Current Job Title</label>
+              <input type="text" id="tw_title" name="currentTitle">
+            </div>
+          </div>
+
+          <div class="form-grid grid-2" style="margin-top: 16px;">
+            <div class="form-group">
+              <label for="tw_work_auth" class="tw-req">Legally authorized to work in USA?</label>
+              <select id="tw_work_auth" name="workAuth">
+                <option value="">Select option...</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="tw_sponsorship" class="tw-req">Require Visa Sponsorship?</label>
+              <select id="tw_sponsorship" name="sponsorship">
+                <option value="">Select option...</option>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 16px;">
+            <label for="tw_whyUs">Why do you want to join our team?</label>
+            <textarea id="tw_whyUs" name="whyUs" rows="3" placeholder="Tell us why you applied..."></textarea>
+          </div>
+        `;
+        hydrationStatusBadge.textContent = 'SPA: Hydrated (11 fields)';
+        hydrationStatusBadge.style.color = '#059669';
+        hydrationStatusBadge.style.borderColor = '#a7f3d0';
+        hydrationStatusBadge.style.background = '#ecfdf5';
+
+        // Re-dispatch event to update counts
+        document.getElementById('spaForm').dispatchEvent(new Event('change'));
+      }, 300);
+    }
+
+    if (triggerMountBtn) triggerMountBtn.addEventListener('click', mountDynamicFields);
+    if (hydrateAsyncBtn) hydrateAsyncBtn.addEventListener('click', mountDynamicFields);
+  </script>
+</body>
+</html>

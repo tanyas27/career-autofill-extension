@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Application - Acme AI Systems</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      background: white;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 4px;
+      color: #1e293b;
+    }
+    p.sub {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+    .required-star {
+      color: #ef4444;
+    }
+    input[type="text"], input[type="email"], input[type="tel"], select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+    .row {
+      display: flex;
+      gap: 16px;
+    }
+    .row .form-group {
+      flex: 1;
+    }
+    .test-banner {
+      background: #f5f3ff;
+      border: 1px solid #ddd6fe;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .test-banner span {
+      font-size: 13px;
+      color: #6d28d9;
+      font-weight: 600;
+    }
+    button.run-test-btn {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+    }
+    button.run-test-btn:hover {
+      opacity: 0.95;
+    }
+    #testLog {
+      margin-top: 20px;
+      padding: 12px;
+      background: #0f172a;
+      color: #38bdf8;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="test-banner">
+      <span>AI Enforced Test Environment</span>
+      <div style="display: flex; gap: 8px;">
+        <button id="checkNanoBtn" class="run-test-btn" style="background: #2563eb; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);">Audit Gemini Nano API</button>
+        <button id="triggerAutofillBtn" class="run-test-btn">Run AI Enforced Autofill</button>
+      </div>
+    </div>
+
+    <h1>Application for Staff AI Infrastructure Engineer</h1>
+    <p class="sub">Acme AI Systems &bull; San Francisco, CA (or Remote)</p>
+
+    <form id="appForm">
+      <div class="row">
+        <div class="form-group">
+          <label for="firstName">First Name <span class="required-star">*</span></label>
+          <input type="text" id="firstName" name="firstName" required>
+        </div>
+        <div class="form-group">
+          <label for="lastName">Last Name <span class="required-star">*</span></label>
+          <input type="text" id="lastName" name="lastName" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address <span class="required-star">*</span></label>
+        <input type="email" id="email" name="email" required>
+      </div>
+
+      <div class="row">
+        <div class="form-group" style="flex: 0 0 110px;">
+          <label for="countryCode">Country Code</label>
+          <input type="text" id="countryCode" name="countryCode" placeholder="+1">
+        </div>
+        <div class="form-group">
+          <label for="phone">Phone Number <span class="required-star">*</span></label>
+          <input type="tel" id="phone" name="phone" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="form-group">
+          <label for="city">City</label>
+          <input type="text" id="city" name="city">
+        </div>
+        <div class="form-group">
+          <label for="country">Country of Residence <span class="required-star">*</span></label>
+          <select id="country" name="country" required>
+            <option value="">Select country...</option>
+            <option value="United States">United States</option>
+            <option value="Canada">Canada</option>
+            <option value="United Kingdom">United Kingdom</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="workAuth">Are you legally authorized to work in the United States? <span class="required-star">*</span></label>
+        <select id="workAuth" name="workAuth" required>
+          <option value="">Please select an option</option>
+          <option value="Yes, authorized without sponsorship">Yes, authorized without sponsorship</option>
+          <option value="No, not authorized">No, not authorized</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="sponsorship">Will you now or in the future require visa sponsorship? <span class="required-star">*</span></label>
+        <select id="sponsorship" name="sponsorship" required>
+          <option value="">Please select an option</option>
+          <option value="No, do not require sponsorship">No, do not require sponsorship</option>
+          <option value="Yes, require sponsorship">Yes, require sponsorship</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="whyUs">Why are you excited to join Acme AI Systems? <span class="required-star">*</span></label>
+        <textarea id="whyUs" name="whyUs" rows="3" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="projectHighlight">Tell us about a notable technical project or system challenge you designed</label>
+        <textarea id="projectHighlight" name="projectHighlight" rows="3"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="coverLetter">Cover Letter / Note to the Hiring Team</label>
+        <textarea id="coverLetter" name="coverLetter" rows="3"></textarea>
+      </div>
+    </form>
+
+    <div id="testLog"></div>
+  </div>
+
+  <script src="../field-detector.js"></script>
+  <script src="../background.js"></script>
+  <script>
+    // Diagnostic auditor for Chrome Prompt API (Gemini Nano)
+    document.getElementById('checkNanoBtn').addEventListener('click', async () => {
+      const logEl = document.getElementById('testLog');
+      logEl.style.display = 'block';
+      logEl.textContent = '[AI AUDIT] Inspecting Browser Prompt API (Gemini Nano)...\n';
+
+      const lmApi = getLanguageModelApi();
+      logEl.textContent += `[AI AUDIT] Resolved LanguageModel API: ${lmApi ? 'FOUND (' + (lmApi.name || typeof lmApi) + ')' : 'NOT FOUND'}\n`;
+
+      const caps = await checkAiCapabilities();
+      logEl.textContent += `[AI AUDIT] Status: ${caps.status}\n`;
+      logEl.textContent += `[AI AUDIT] Active Engine: ${caps.engine}\n`;
+      logEl.textContent += `[AI AUDIT] Message: ${caps.message}\n`;
+
+      if (caps.engine === 'gemini-nano') {
+        logEl.textContent += `\n[VERIFIED] On-Device Gemini Nano is FULLY ACTIVE and ready to serve Prompt API calls!\n`;
+      } else if (caps.status === 'downloading' || caps.status === 'after-download' || caps.status === 'downloadable') {
+        logEl.textContent += `\n[NOTICE] Gemini Nano model status is '${caps.status}'.\nChrome is preparing/downloading model weights in the background.\nThe deterministic Local Semantic Arbiter is handling form arbitration.\n`;
+      } else {
+        logEl.textContent += `\n[NOTICE] Prompt API is not active in this browser instance.\nOperating on built-in Local Semantic Reasoning Arbiter (100% offline, zero cloud).\n`;
+      }
+    });
+
+    // Test controller
+    document.getElementById('triggerAutofillBtn').addEventListener('click', async () => {
+      const logEl = document.getElementById('testLog');
+      logEl.style.display = 'block';
+      logEl.textContent = '[Test] Running AI Enforced Autofill on live form...\n';
+
+      const profile = {
+        firstName: 'Elena',
+        lastName: 'Rostova',
+        fullName: 'Elena Rostova',
+        email: 'elena.rostova@example.com',
+        phone: '+1 (555) 432-1098',
+        city: 'San Francisco',
+        country: 'United States',
+        workAuthCountries: 'United States',
+        workAuth: 'Yes',
+        sponsorship: 'No',
+        whyUs: 'Deeply drawn to Acme AI Systems focus on on-device machine learning and inference efficiency.',
+        projectHighlight: 'Designed a real-time vector indexing pipeline scaling to 200M embeddings with p99 latency < 15ms.',
+        coverLetter: 'Dear Engineering Leadership, I am pleased to submit my application for the Staff AI Infrastructure Engineer role.'
+      };
+
+      const fields = FieldDetector.getFields();
+      logEl.textContent += `[Test] Discovered ${fields.length} interactive fields\n`;
+
+      const sft = FieldDetector.buildSemanticFormTree(fields);
+      const aiResult = await matchFieldsWithAi(sft, profile, { aiEnforced: true });
+      logEl.textContent += `[Test] AI Arbiter produced ${aiResult.mappings.length} mappings\n`;
+
+      let count = 0;
+      for (const m of aiResult.mappings) {
+        const el = document.querySelector(`[data-ca-field-id="${m.fieldId}"]`);
+        if (el) {
+          const val = m.selectedOption || profile[m.profileKey];
+          if (val) {
+            FieldDetector.setValue(el, val);
+            el.style.outline = '2px solid #8b5cf6';
+            el.style.boxShadow = '0 0 10px rgba(139, 92, 246, 0.45)';
+            count++;
+          }
+        }
+      }
+
+      logEl.textContent += `[SUCCESS] AI Enforced Autofill filled ${count} fields!\n`;
+      window.__TEST_AUTOFILL_COMPLETED__ = true;
+      window.__TEST_FILLED_COUNT__ = count;
+    });
+  </script>
+</body>
+</html>

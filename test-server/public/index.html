@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Career Autofill - ATS Test Suite Hub</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .hub-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+    .hub-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+    .hub-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-focus);
+    }
+    .hub-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .hub-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+    .hub-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 18px 0;
+      font-size: 12px;
+      color: #475569;
+    }
+    .feature-list li {
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .feature-list li::before {
+      content: '✓';
+      color: var(--success);
+      font-weight: bold;
+    }
+    .open-test-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .instructions-card {
+      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-md);
+    }
+    .instructions-card h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #e0e7ff;
+    }
+    .instructions-card ol {
+      margin-left: 20px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Global Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">⚡</span>
+        <span>Career Autofill Test Suite</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" class="active">Hub</a>
+        <a href="workday.html">Workday</a>
+        <a href="greenhouse.html">Greenhouse / Lever</a>
+        <a href="smartrecruiters.html">SmartRecruiters</a>
+        <a href="taleo.html">Taleo Table</a>
+        <a href="tailwind-spa.html">Tailwind SPA</a>
+        <a href="iframe-test.html">Multi-Frame Iframe</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1 class="page-title">ATS Form Simulation Hub</h1>
+      <p class="page-subtitle">Test Career Autofill across realistic ATS markup patterns, framework variations, and dynamic SPA architectures.</p>
+    </div>
+
+    <!-- Quick Instructions -->
+    <div class="instructions-card">
+      <h2>How to test Career Autofill with this suite</h2>
+      <ol>
+        <li>Click any form simulator below to open that specific ATS test page.</li>
+        <li>Click the <strong>Career Autofill</strong> extension icon in your browser toolbar to open the popup.</li>
+        <li>If your profile is empty, click <strong>"Load Sample Profile"</strong> in the popup banner.</li>
+        <li>Click <strong>"Autofill Form"</strong> and watch the fields populate automatically!</li>
+        <li>Test edge cases: try toggling <em>"Fill all fields"</em>, clearing the form, or testing dynamic hydration.</li>
+      </ol>
+    </div>
+
+    <!-- Test Suites Grid -->
+    <div class="hub-grid">
+
+      <!-- 1. Workday ATS -->
+      <a href="workday.html" class="hub-card">
+        <div>
+          <div class="hub-card-header">
+            <span class="badge-tag badge-workday">Workday ATS</span>
+            <span style="font-size: 18px;">🏢</span>
+          </div>
+          <h3>Workday Simulator</h3>
+          <p>Simulates modern Workday application forms with custom attributes and readonly comboboxes.</p>
+          <ul class="feature-list">
+            <li><code>data-automation-id="formField"</code> containers</li>
+            <li>Interactive <code>readonly</code> combobox dropdowns</li>
+            <li>Country Code dropdown protection</li>
+            <li>Work Authorization questions</li>
+          </ul>
+        </div>
+        <div class="open-test-btn">Open Workday Test Page →</div>
+      </a>
+
+      <!-- 2. Greenhouse / Lever -->
+      <a href="greenhouse.html" class="hub-card">
+        <div>
+          <div class="hub-card-header">
+            <span class="badge-tag badge-greenhouse">Greenhouse / Lever</span>
+            <span style="font-size: 18px;">🌱</span>
+          </div>
+          <h3>Greenhouse & Lever</h3>
+          <p>Standard modern career application format with long-form essay answers and contact details.</p>
+          <ul class="feature-list">
+            <li>HTML5 input types & labels</li>
+            <li>Social links (LinkedIn, GitHub, Portfolio)</li>
+            <li>Multiple essay textareas ("Why Us", Project Highlight)</li>
+            <li>Notice period & salary expectations</li>
+          </ul>
+        </div>
+        <div class="open-test-btn">Open Greenhouse Test Page →</div>
+      </a>
+
+      <!-- 3. SmartRecruiters Web Components -->
+      <a href="smartrecruiters.html" class="hub-card">
+        <div>
+          <div class="hub-card-header">
+            <span class="badge-tag badge-smart">Web Components</span>
+            <span style="font-size: 18px;">🧩</span>
+          </div>
+          <h3>SmartRecruiters Simulator</h3>
+          <p>Tests custom web components, custom element tags, and ARIA role radiogroups.</p>
+          <ul class="feature-list">
+            <li>Custom <code>spl-input</code> & <code>spl-autocomplete</code></li>
+            <li>ARIA <code>role="radiogroup"</code> & <code>role="radio"</code></li>
+            <li>Custom searchboxes & comboboxes</li>
+            <li>Date picker custom elements</li>
+          </ul>
+        </div>
+        <div class="open-test-btn">Open SmartRecruiters Page →</div>
+      </a>
+
+      <!-- 4. Taleo Legacy Table -->
+      <a href="taleo.html" class="hub-card">
+        <div>
+          <div class="hub-card-header">
+            <span class="badge-tag badge-taleo">Legacy Enterprise</span>
+            <span style="font-size: 18px;">🏛️</span>
+          </div>
+          <h3>Oracle Taleo Simulator</h3>
+          <p>Simulates table-based legacy enterprise layouts (Taleo, SelectMinds, BrassRing).</p>
+          <ul class="feature-list">
+            <li>Table-based <code>&lt;td&gt;</code> label-to-input mapping</li>
+            <li>Dropdowns with <code>value="-1"</code> and <code>"Select One"</code></li>
+            <li>Legacy names & address lines</li>
+            <li>Table header required asterisks</li>
+          </ul>
+        </div>
+        <div class="open-test-btn">Open Taleo Test Page →</div>
+      </a>
+
+      <!-- 5. Tailwind & Dynamic SPA -->
+      <a href="tailwind-spa.html" class="hub-card">
+        <div>
+          <div class="hub-card-header">
+            <span class="badge-tag badge-tailwind">Tailwind & SPA</span>
+            <span style="font-size: 18px;">⚛️</span>
+          </div>
+          <h3>Tailwind & Dynamic SPA</h3>
+          <p>Tests CSS pseudo-element asterisks (<code>::after</code>) and delayed JavaScript hydration.</p>
+          <ul class="feature-list">
+            <li>CSS <code>::after { content: "*" }</code> required labels</li>
+            <li>Simulate delayed React/Vue DOM hydration</li>
+            <li>Interactive "Add Experience" dynamic inputs</li>
+            <li>Verify extension "↻ Re-scan" button</li>
+          </ul>
+        </div>
+        <div class="open-test-btn">Open Tailwind SPA Page →</div>
+      </a>
+
+      <!-- 6. Multi-Frame Iframe -->
+      <a href="iframe-test.html" class="hub-card">
+        <div>
+          <div class="hub-card-header">
+            <span class="badge-tag badge-iframe">Multi-Frame</span>
+            <span style="font-size: 18px;">🖼️</span>
+          </div>
+          <h3>Multi-Frame Iframe</h3>
+          <p>Verifies extension script injection and autofill inside embedded frames and iframes.</p>
+          <ul class="feature-list">
+            <li>Parent container with embedded job application frame</li>
+            <li>Multi-frame script injection test</li>
+            <li>Cross-frame message coordination</li>
+            <li>Fail-safe sandbox handling</li>
+          </ul>
+        </div>
+        <div class="open-test-btn">Open Iframe Test Page →</div>
+      </a>
+
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

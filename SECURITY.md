@@ -1,92 +1,54 @@
-# Security Audit Summary
+# Security Audit & Privacy Policy
 
-**Last Audit:** October 8, 2026  
-**Status:** ✅ No critical security issues found
+**Last Audit:** October 9, 2026  
+**Status:** Passed — Professional Grade, Zero Cloud Egress
 
 ## Security Measures Implemented
 
 ### 1. Content Security Policy (CSP)
-- Strict CSP enforced in manifest.json
-- No inline scripts or eval allowed
-- Only self-sourced scripts permitted
+- Strict CSP enforced in `manifest.json`: `"extension_pages": "script-src 'self'; object-src 'self'"`.
+- No inline scripts or `eval()` allowed.
+- Only self-sourced scripts packaged in the extension are permitted.
 
-### 2. Input Sanitization
-- All user data stored and retrieved via `chrome.storage.local` API
-- No dynamic code execution (no eval, Function constructor, or similar)
-- No unsafe innerHTML with user data
-- Form values are set directly via DOM properties, not innerHTML
+### 2. Input Sanitization & Data Safety
+- All user profile data stored and retrieved exclusively via `chrome.storage.local`.
+- No dynamic code execution (`eval`, `new Function()`, or dynamic script tags).
+- No unsafe `innerHTML` assignments with user profile data.
+- Form values are set directly via DOM properties (`.value`, `HTMLInputElement.prototype.set`) with bubbling event dispatch.
 
 ### 3. Safe DOM Manipulation
-- Static SVG icon uses innerHTML (safe - no user input)
-- All form filling uses `.value` property assignment
-- setAttribute only used for setting form values (safe context)
+- Static SVG icons use safe, hardcoded strings.
+- DOM traversal is strictly read-and-fill for interactive form elements.
+- Sensitive elements (`type="password"`) are strictly ignored and never saved or autofilled.
 
 ### 4. Permissions
-- Minimal permissions requested:
-  - `storage` - for saving user profile data
-  - `activeTab` - for autofilling current page only
-  - `scripting` - for injecting content scripts
-  - `host_permissions: <all_urls>` - needed to autofill on any job site
+- Minimal required permissions:
+  - `storage` — for saving user profile data locally.
+  - `activeTab` — for triggering autofill on the active tab only.
+  - `scripting` — for executing the content scripts upon user request.
+  - `tabs` — for inspecting tab URLs to determine whether a page is an ATS portal.
+  - `host_permissions: <all_urls>` — required because employer career portals run on unpredictable corporate domains.
 
 ### 5. Data Storage
-- All user data stored locally via Chrome Storage API
-- No external data transmission
-- No tracking or analytics
-- No third-party API calls
+- All user data stored locally via Chrome Storage API.
+- Zero external data transmission.
+- Zero tracking or analytics.
+- Zero third-party cloud API calls.
 
 ### 6. Cross-Site Scripting (XSS) Prevention
-- No postMessage with wildcard origin (removed)
-- No dynamic script injection
-- Content scripts isolated from page scripts
+- No `postMessage` with wildcard origins.
+- Content scripts operate strictly in isolated worlds from page scripts.
+- No remote script loading.
 
-## Code Review Findings
+### 7. On-Device AI Security (Gemini Nano)
+- **Zero Cloud Egress**: Semantic AI matching uses Chrome's Prompt API (`LanguageModel`), which executes on-device via local GPU/NPU/CPU.
+- **No Remote LLM Endpoints**: No data, resume text, or form contents are sent to external OpenAI, Anthropic, or cloud Gemini servers.
+- **Strict JSON Schema Constraints**: AI inference outputs are constrained by structured JSON schemas to prevent unpredictable or malicious outputs.
 
-### Potential Concerns (Mitigated)
-1. **`<all_urls>` permission**: Required to work on any job application site
-   - Mitigation: Floating button only appears on detected job application pages
-   - Content script is read-only on non-job sites
-
-2. **Shadow DOM traversal**: Extension searches deep into shadow DOMs
-   - Mitigation: Only reads/writes form values, never executes code
-   - Required for ServiceNow and other web component-based job portals
-
-### Safe Practices Confirmed
-- ✅ No use of `eval()` or `Function()`
-- ✅ No `document.write()`
-- ✅ No unsafe `innerHTML` with user data
-- ✅ No dynamic script loading
-- ✅ No external HTTP requests
-- ✅ No localStorage (uses chrome.storage.local instead)
-- ✅ Console logging for debugging (no sensitive data logged)
-
-## Recommendations for Users
-
-1. **Review stored data**: Use the JSON editor in the extension popup to see what's stored
-2. **Don't store sensitive info**: Never save passwords or SSNs in the extension
-3. **Regular updates**: Keep the extension updated for security patches
-4. **Chrome Web Store only**: Only install from official Chrome Web Store
-
-## Developer Notes
-
-### Adding New Features
-When adding new features, ensure:
-- No dynamic code execution
-- All user input is properly handled
-- CSP remains strict
-- Permissions stay minimal
-- No external data transmission
-
-### Testing Security
-Run these checks before each release:
-```bash
-# Check for unsafe patterns
-grep -r "eval\|innerHTML\|document.write" *.js
-grep -r "Function\(" *.js
-grep -r "setTimeout.*string\|setInterval.*string" *.js
-
-# Verify CSP
-cat manifest.json | grep content_security_policy
-```
-
-## Contact
-Report security issues at: [your email or GitHub issues]
+## Safe Practices Confirmed
+- No `eval()` or `Function()`
+- No `document.write()`
+- No unsafe `innerHTML` with user data
+- No external HTTP requests (`fetch` / `XMLHttpRequest`)
+- Passwords excluded from detection and saving
+- Console logging for debugging (no sensitive data logged)

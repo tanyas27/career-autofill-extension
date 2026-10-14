@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartRecruiters Web Components Simulator - Career Autofill Test Suite</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Custom Web Component Mock Styles */
+    spl-input, spl-autocomplete, spl-textarea, spl-date-field {
+      display: block;
+      width: 100%;
+    }
+    .custom-radio-chip-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .custom-chip {
+      padding: 8px 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+    .custom-chip[aria-checked="true"] {
+      border-color: var(--primary);
+      background: #eff6ff;
+      color: var(--primary);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Global Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <span class="brand-icon">⚡</span>
+        <span>Career Autofill Test Suite</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Hub</a>
+        <a href="workday.html">Workday</a>
+        <a href="greenhouse.html">Greenhouse / Lever</a>
+        <a href="smartrecruiters.html" class="active">SmartRecruiters</a>
+        <a href="taleo.html">Taleo Table</a>
+        <a href="tailwind-spa.html">Tailwind SPA</a>
+        <a href="iframe-test.html">Multi-Frame Iframe</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-container">
+    <div class="page-header">
+      <h1 class="page-title">
+        SmartRecruiters & Web Components
+        <span class="badge-tag badge-smart">Custom Elements</span>
+      </h1>
+      <p class="page-subtitle">Tests SmartRecruiters Web Components (<code>spl-input</code>, <code>spl-autocomplete</code>, <code>spl-radio-group</code>) and ARIA roles.</p>
+    </div>
+
+    <!-- Interactive Toolbar -->
+    <div class="action-toolbar">
+      <div class="toolbar-info">
+        <span>Status:</span>
+        <span id="filledCountDisplay" class="stats-counter">0 of 14 fields filled</span>
+      </div>
+      <div class="toolbar-buttons">
+        <button type="button" id="inspectFormBtn" class="btn btn-secondary">🔍 Inspect Detector</button>
+        <button type="button" id="clearFormBtn" class="btn btn-danger">↺ Clear All Fields</button>
+      </div>
+    </div>
+
+    <!-- Form Container -->
+    <form id="smartForm" class="form-card">
+
+      <div class="card-section">
+        <div class="section-header">
+          <h3>Candidate Profile</h3>
+          <span class="section-hint">Web Components architecture</span>
+        </div>
+
+        <div class="form-grid grid-2">
+          <!-- Web Component: spl-input firstName -->
+          <div class="form-group">
+            <label for="sr_fn">First Name <span class="required-asterisk">*</span></label>
+            <spl-input id="sr_fn_comp">
+              <input type="text" id="sr_fn" name="firstName" required>
+            </spl-input>
+          </div>
+
+          <!-- Web Component: spl-input lastName -->
+          <div class="form-group">
+            <label for="sr_ln">Last Name <span class="required-asterisk">*</span></label>
+            <spl-input id="sr_ln_comp">
+              <input type="text" id="sr_ln" name="lastName" required>
+            </spl-input>
+          </div>
+        </div>
+
+        <div class="form-grid grid-2" style="margin-top: 16px;">
+          <!-- Web Component: Email -->
+          <div class="form-group">
+            <label for="sr_email">Email <span class="required-asterisk">*</span></label>
+            <spl-input id="sr_email_comp">
+              <input type="email" id="sr_email" name="email" required>
+            </spl-input>
+          </div>
+
+          <!-- Web Component: Phone -->
+          <div class="form-group">
+            <label for="sr_phone">Phone Number <span class="required-asterisk">*</span></label>
+            <spl-input id="sr_phone_comp">
+              <input type="tel" id="sr_phone" name="phoneNumber" required>
+            </spl-input>
+          </div>
+        </div>
+
+        <div class="form-grid grid-2" style="margin-top: 16px;">
+          <!-- Web Component: Autocomplete Country -->
+          <div class="form-group">
+            <label for="sr_country">Country / Region <span class="required-asterisk">*</span></label>
+            <spl-autocomplete id="sr_country_comp" role="combobox" aria-haspopup="listbox">
+              <input type="text" id="sr_country" name="country" placeholder="Select a Country" required>
+            </spl-autocomplete>
+          </div>
+
+          <!-- Web Component: City -->
+          <div class="form-group">
+            <label for="sr_city">City</label>
+            <spl-input id="sr_city_comp">
+              <input type="text" id="sr_city" name="city">
+            </spl-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- Links & Experience -->
+      <div class="card-section">
+        <div class="section-header">
+          <h3>Experience & Social URLs</h3>
+        </div>
+
+        <div class="form-grid grid-2">
+          <div class="form-group">
+            <label for="sr_company">Current Employer</label>
+            <spl-input id="sr_company_comp">
+              <input type="text" id="sr_company" name="currentCompany">
+            </spl-input>
+          </div>
+
+          <div class="form-group">
+            <label for="sr_title">Current Position / Title</label>
+            <spl-input id="sr_title_comp">
+              <input type="text" id="sr_title" name="currentTitle">
+            </spl-input>
+          </div>
+        </div>
+
+        <div class="form-grid grid-2" style="margin-top: 16px;">
+          <div class="form-group">
+            <label for="sr_linkedin">LinkedIn URL</label>
+            <spl-input id="sr_linkedin_comp">
+              <input type="url" id="sr_linkedin" name="linkedInUrl">
+            </spl-input>
+          </div>
+
+          <div class="form-group">
+            <label for="sr_github">GitHub URL</label>
+            <spl-input id="sr_github_comp">
+              <input type="url" id="sr_github" name="gitHubUrl">
+            </spl-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom ARIA Radio Group (SmartRecruiters Chip Radios) -->
+      <div class="card-section">
+        <div class="section-header">
+          <h3>Custom ARIA Radiogroups</h3>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label id="sr_auth_label">Are you authorized to work in this location? <span class="required-asterisk">*</span></label>
+          <div class="custom-radio-chip-group" role="radiogroup" aria-labelledby="sr_auth_label">
+            <div class="custom-chip" role="radio" tabindex="0" aria-checked="false" data-value="Yes">Yes, Authorized</div>
+            <div class="custom-chip" role="radio" tabindex="-1" aria-checked="false" data-value="No">No, Not Authorized</div>
+          </div>
+          <!-- Hidden fallback input bound to radio state -->
+          <input type="hidden" id="sr_auth_input" name="workAuthorization">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 18px;">
+          <label id="sr_sponsor_label">Do you require visa sponsorship? <span class="required-asterisk">*</span></label>
+          <div class="custom-radio-chip-group" role="radiogroup" aria-labelledby="sr_sponsor_label">
+            <div class="custom-chip" role="radio" tabindex="0" aria-checked="false" data-value="No">No</div>
+            <div class="custom-chip" role="radio" tabindex="-1" aria-checked="false" data-value="Yes">Yes</div>
+          </div>
+          <input type="hidden" id="sr_sponsor_input" name="sponsorship">
+        </div>
+
+        <!-- Custom Datepicker Component -->
+        <div class="form-grid grid-2">
+          <div class="form-group">
+            <label for="sr_date">Application Date</label>
+            <spl-date-field id="sr_date_comp">
+              <input type="date" id="sr_date" name="applicationDate">
+            </spl-date-field>
+          </div>
+
+          <div class="form-group">
+            <label for="sr_salary">Desired Annual Salary</label>
+            <spl-input id="sr_salary_comp">
+              <input type="text" id="sr_salary" name="salaryExpectations">
+            </spl-input>
+          </div>
+        </div>
+      </div>
+
+      <!-- Long-form Textarea Web Component -->
+      <div class="card-section">
+        <div class="section-header">
+          <h3>Essay / Notes</h3>
+        </div>
+
+        <div class="form-group">
+          <label for="sr_coverLetter">Cover Letter & Message to Recruiter</label>
+          <spl-textarea id="sr_cl_comp">
+            <textarea id="sr_coverLetter" name="coverLetter" rows="4"></textarea>
+          </spl-textarea>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+        <button type="submit" class="btn btn-primary">Submit Application</button>
+      </div>
+    </form>
+
+    <!-- Live Event Log -->
+    <div class="test-log-card">
+      <div class="test-log-header">
+        <span>Activity Log & Field Inspection</span>
+        <span>Console</span>
+      </div>
+      <div id="logBody" class="test-log-body"></div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    // ARIA Radio chip click handlers
+    document.querySelectorAll('.custom-radio-chip-group').forEach(group => {
+      const chips = group.querySelectorAll('.custom-chip');
+      chips.forEach(chip => {
+        chip.addEventListener('click', () => {
+          chips.forEach(c => c.setAttribute('aria-checked', 'false'));
+          chip.setAttribute('aria-checked', 'true');
+          const hiddenInput = group.parentElement.querySelector('input[type="hidden"]');
+          if (hiddenInput) {
+            hiddenInput.value = chip.dataset.value;
+            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
