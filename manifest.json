@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Career Autofill",
-  "version": "2.0.0",
-  "description": "Auto-fill mandatory fields on job applications (Workday, SmartRecruiters, etc.)",
+  "version": "2.2.0",
+  "description": "Smart form filling on ATS job applications (Workday, SmartRecruiters) powered by On-Device Gemini AI.",
   "icons": {
     "16": "icons/icon-16.png",
     "48": "icons/icon-48.png",
@@ -19,7 +19,8 @@
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -32,7 +33,7 @@
       "matches": ["<all_urls>"],
       "js": ["field-detector.js", "content.js"],
       "run_at": "document_idle",
-      "all_frames": false
+      "all_frames": true
     }
   ],
   "content_security_policy": {
